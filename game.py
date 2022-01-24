@@ -19,22 +19,12 @@ def load_image(name, colorkey=None):
     return image
 
 
-def load_level(filename):
-    filename = "data/" + filename
-    # читаем уровень, убирая символы перевода строки
-    with open(filename, 'r') as mapFile:
-        level_map = [line.strip() for line in mapFile]
-    # и подсчитываем максимальную длину
-    max_width = max(map(len, level_map))
-    # дополняем каждую строку пустыми клетками ('.')
-    return list(map(lambda x: x.ljust(max_width, '.'), level_map))
-
-
 player = None
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
 places_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
+enemy_group = pygame.sprite.Group()
 
 tile_width = tile_height = 64
 size = tile_width * 8, tile_height * 8
@@ -47,10 +37,19 @@ tile_images = {
     'air_tower': pygame.transform.scale(load_image('air_tower_image.png', -1), (tile_width, tile_height)),
     'ground_tower': pygame.transform.scale(load_image('ground_tower_image.png', -1), (tile_width, tile_height))
 }
-
 player_image = pygame.transform.scale(load_image('player_image.png', -1), (tile_width, tile_height))
 air_enemy = pygame.transform.scale(load_image('air_enemy_image.png', -1), (tile_width, tile_height))
 ground_enemy = pygame.transform.scale(load_image('ground_enemy_image.png', -1), (tile_width, tile_height))
+
+
+def load_level(filename):
+    filename = "data/" + filename
+    with open(filename, 'r') as mapFile:
+        level_map = [line.strip() for line in mapFile]
+    max_width = max(map(len, level_map))
+    lvl = list(map(lambda x: x.ljust(max_width, '.'), level_map))
+    lvl = [list(line) for line in lvl]
+    return lvl
 
 
 class Tile(pygame.sprite.Sprite):
@@ -87,7 +86,6 @@ class Player(pygame.sprite.Sprite):
 
 
 def generate_level(level):
-    new_player, x, y = None, None, None
     for y in range(min(8, len(level))):
         for x in range(min(8, len(level[y]))):
             if level[y][x] == '.':
@@ -95,24 +93,36 @@ def generate_level(level):
             elif level[y][x] == '-':
                 Tile('road', x, y)
             elif level[y][x] == 'g':
-                Tile('grass', x, y)
+                Tile('place', x, y)
                 Tile('ground_tower', x, y)
             elif level[y][x] == 'a':
-                Tile('grass', x, y)
+                Tile('place', x, y)
                 Tile('air_tower', x, y)
             elif level[y][x] == 'p':
-                Tile('place', x, y)
-    # вернем игрока, а также размер поля в клетках
-    return new_player, x, y
+                Place('place', x, y)
+
+
+class Board:
+    def __init__(self,  width, height):
+        self.width = width
+        self.height = height
+        self.board = [[0] * width for _ in range(height)]
+        self.cell_size = 64
+
+    def render(self):
+        tiles_group.draw(screen)
+        places_group.draw(screen)
+        enemy_group.draw(screen)
+        player_group.draw(screen)
 
 
 def main():
-
     clock = pygame.time.Clock()
     fps = 60
     running = True
-    player, level_x, level_y = generate_level(load_level('lvl1.txt'))
+    generate_level(load_level('lvl1.txt'))
     player = Player(0, 0)
+    board = Board(8, 8)
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -127,10 +137,9 @@ def main():
                 elif event.key == pygame.K_DOWN:
                     player_group.update(0, 64)
         screen.fill((0, 0, 0))
-        all_sprites.draw(screen)
+        board.render()
         clock.tick(fps)
         pygame.display.flip()
-
     pygame.quit()
 
 
