@@ -11,9 +11,11 @@ class Monster:
         self.width, self.nx, self.ny = board_width, 1, 0
         self.par_x, self.par_y = par, par
         self.coord = [0, 0]
-        self.left, self.top = 1, 1
+        self.left, self.top = 0, 0
+        self.y = board_width / 2
+        self.rotate = False
         if self.m_type == 'flying':
-            monster_image = load_image("Cataract.png")
+            monster_image = load_image("cataract.png")
         else:
             monster_image = load_image("skelly.png")
         self.monster = pygame.sprite.Sprite(all_sprites)
@@ -23,26 +25,32 @@ class Monster:
     def move(self):
         if self.left + self.coord[0] * self.width <= self.x <= self.left + (self.coord[0] + 1) * self.width and \
                 self.top + self.coord[1] * self.width <= self.y <= self.top + (self.coord[1] + 1) * self.width:
-
             self.x += self.par_x * self.nx
-            print(self.x)
             self.y += self.par_y * self.ny
+
+            if self.rotate and self.x % self.width > self.width // 2 and self.nx == 1:
+                self.ny = self.nx
+                self.nx = 0
+                self.rotate = False
+            elif self.rotate and self.y % self.width > self.width // 2 and self.ny == 1:
+                self.nx = -self.ny
+                self.ny = 0
+                self.rotate = False
+            elif self.rotate and self.x % self.width < self.width // 2 and self.nx == -1:
+                self.ny = self.nx
+                self.nx = 0
+                self.rotate = False
+            elif self.rotate and self.y % self.width < self.width // 2 and self.ny == -1:
+                self.nx = -self.ny
+                self.ny = 0
+                self.rotate = False
         else:
             board.monster_move(self.coord[0], self.coord[1], self.nx, self.ny, self.monster)
             self.coord[0] += self.nx
             self.coord[1] += self.ny
-            if self.coord[0] == self.n - 1 and self.nx == 1:
-                self.ny = self.nx
-                self.nx = 0
-            elif self.coord[1] == self.n - 1 and self.ny == 1:
-                self.nx = -self.ny
-                self.ny = 0
-            elif self.coord[0] == 0 and self.nx == -1:
-                self.ny = self.nx
-                self.nx = 0
-            elif self.coord[1] == 0 and self.ny == -1:
-                self.nx = -self.ny
-                self.ny = 0
+            if self.coord[0] == self.n - 1 and self.nx == 1 or self.coord[1] == self.n - 1 and self.ny == 1 or\
+                    self.coord[0] == 0 and self.nx == -1 or self.coord[1] == 0 and self.ny == -1:
+                self.rotate = True
 
 
 class Board:
@@ -77,8 +85,10 @@ class Board:
         print(cell_coords)
         if cell_coords:
             cell_coords = cell_coords[1], cell_coords[0]
-            if self.board[cell_coords[0]][cell_coords[1]] == 0:
-                self.board[cell_coords[0]][cell_coords[1]] = 1
+            road = pygame.sprite.Sprite(all_sprites)
+            road.image = load_image("beta.png")
+            road.rect = road.image.get_rect()
+            self.board[cell_coords[0]][cell_coords[1]] = road
 
 
     def get_cell(self, mouse_pos):
@@ -88,19 +98,20 @@ class Board:
             return None
         return ((mouse_x - self.left) // self.cell_size, (mouse_y - self.top) // self.cell_size)
 
-    def check(self):
-        if self.board[0][0] == 0:
-            return True
-        else:
-            return False
-
     def monster_move(self, x, y, move_x, move_y, monster):
         self.board[y][x] = 0
         self.board[y + move_y][x + move_x] = monster
 
-    def monster_spawn(self, x, y):
-        self.board[x][y] = 1
-        print(1)
+    def monster_spawn(self, x, y, monster):
+        self.board[x][y] = monster
+
+    def fill(self, name):
+        for i in range(self.width):
+            for j in range(self.height):
+                road = pygame.sprite.Sprite(all_sprites)
+                road.image = load_image(name)
+                road.rect = road.image.get_rect()
+                self.board[i][j] = road
 
 
 def load_image(name, colorkey=None):
@@ -127,13 +138,15 @@ if __name__ == '__main__':
     size = width, height = 700, 700
     screen = pygame.display.set_mode(size)
     board = Board(n, n)
+    board_state = Board(n, n)
     board_width = 64
     left_top = 0
     board.set_view(left_top, left_top, board_width)
+    board_state.set_view(left_top, left_top, board_width)
     all_sprites = pygame.sprite.Group()
     monsters = []
     clock = pygame.time.Clock()
-    v, fps = 0.5, 4
+    v, fps = 1, 60
     par = v * board_width / fps
     running = True
     start = False
@@ -143,14 +156,20 @@ if __name__ == '__main__':
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
-                start = True
-                monster_type = random.choice(['ground', 'flying'])
-                monsters.append(Monster(left_top, left_top, monster_type, par, board_width, n, board, all_sprites))
-                board.monster_spawn(0, 0)
+                if event.button == 1:
+                    start = True
+                    monster_type = random.choice(['ground', 'flying'])
+                    obj_monster = Monster(left_top, left_top, monster_type, par, board_width, n, board, all_sprites)
+                    monsters.append(obj_monster)
+                    board.monster_spawn(0, 0, obj_monster.monster)
+                else:
+                    print(1)
+                    board_state.get_click(event.pos)
         if start:
             for i in range(len(monsters)):
                 monsters[i].move()
         screen.fill((0, 0, 0))
+        board_state.render(screen)
         board.render(screen)
         clock.tick(fps)
         all_sprites.draw(screen)
