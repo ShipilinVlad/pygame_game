@@ -2,11 +2,6 @@ import pygame
 import os
 import sys
 
-pygame.init()
-size = 760, 765
-screen = pygame.display.set_mode(size)
-pygame.display.set_caption('Йопики у ворот')
-
 
 def load_image(name, colorkey=None):
     fullname = os.path.join('data', name)
@@ -38,10 +33,13 @@ def load_level(filename):
 player = None
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
+places_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
-enemy_group = pygame.sprite.Group()
 
 tile_width = tile_height = 64
+size = tile_width * 8, tile_height * 8
+screen = pygame.display.set_mode(size)
+pygame.display.set_caption('Йопики у ворот')
 tile_images = {
     'road': pygame.transform.scale(load_image('road.png'), (tile_width, tile_height)),
     'grass': pygame.transform.scale(load_image('grass.png'), (tile_width, tile_height)),
@@ -63,36 +61,44 @@ class Tile(pygame.sprite.Sprite):
             tile_width * pos_x, tile_height * pos_y)
 
 
-class Player(pygame.sprite.Sprite):
-    # Для нормальной картинки
-    image = player_image
+class Place(pygame.sprite.Sprite):
+    def __init__(self, tile_type, pos_x, pos_y):
+        super().__init__(places_group, all_sprites)
+        self.image = tile_images[tile_type]
+        self.rect = self.image.get_rect().move(
+            tile_width * pos_x, tile_height * pos_y)
 
-    def __init__(self, *group):
-        super().__init__(*group)
-        self.image = Player.image
-        self.rect = self.image.get_rect()
-        self.rect.x = 0
-        self.rect.y = 0
+    def place_tower(self, tower_type, pos_x, pos_y):
+        pass
+
+
+class Player(pygame.sprite.Sprite):
+    def __init__(self, pos_x, pos_y):
+        super().__init__(player_group, all_sprites)
+        self.image = player_image
+        self.rect = self.image.get_rect().move(
+            tile_width * pos_x, tile_height * pos_y)
 
     def update(self, dx, dy):
-        self.rect.x += dx
-        self.rect.y += dy
+        if 0 <= self.rect.x + dx <= size[0] - tile_width:
+            self.rect.x += dx
+        if 0 <= self.rect.y + dy <= size[1] - tile_height:
+            self.rect.y += dy
 
 
 def generate_level(level):
     new_player, x, y = None, None, None
-    for y in range(len(level)):
-        for x in range(len(level[y])):
+    for y in range(min(8, len(level))):
+        for x in range(min(8, len(level[y]))):
             if level[y][x] == '.':
                 Tile('grass', x, y)
             elif level[y][x] == '-':
                 Tile('road', x, y)
-            elif level[y][x] == 'h':
-                Tile('grass', x, y)
-                new_player = Player(x, y)
             elif level[y][x] == 'g':
+                Tile('grass', x, y)
                 Tile('ground_tower', x, y)
             elif level[y][x] == 'a':
+                Tile('grass', x, y)
                 Tile('air_tower', x, y)
             elif level[y][x] == 'p':
                 Tile('place', x, y)
@@ -101,30 +107,25 @@ def generate_level(level):
 
 
 def main():
-    pygame.init()
-    size = 760, 765
-    screen = pygame.display.set_mode(size)
-    pygame.display.set_caption('Йопики у ворот')
+
     clock = pygame.time.Clock()
     fps = 60
     running = True
-    all_sprites = pygame.sprite.Group()
-    Player(all_sprites)
-    directions = {'left': False, 'right': False, 'up': False, 'down': False}
-    counter = 0
+    player, level_x, level_y = generate_level(load_level('lvl1.txt'))
+    player = Player(0, 0)
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RIGHT:
-                    all_sprites.update(50, 0)
+                    player_group.update(64, 0)
                 elif event.key == pygame.K_LEFT:
-                    all_sprites.update(-50, 0)
+                    player_group.update(-64, 0)
                 elif event.key == pygame.K_UP:
-                    all_sprites.update(0, -50)
+                    player_group.update(0, -64)
                 elif event.key == pygame.K_DOWN:
-                    all_sprites.update(0, 50)
+                    player_group.update(0, 64)
         screen.fill((0, 0, 0))
         all_sprites.draw(screen)
         clock.tick(fps)
