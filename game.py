@@ -6,7 +6,6 @@ pygame.init()
 size = 760, 765
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption('Йопики у ворот')
-all_sprites = pygame.sprite.Group()
 
 
 def load_image(name, colorkey=None):
@@ -25,34 +24,48 @@ def load_image(name, colorkey=None):
     return image
 
 
-class Level:
-    def __init__(self, width, height):
-        self.width = width
-        self.height = height
-        self.board = [[0] * width for _ in range(height)]
-        self.cell_size = 50
+def load_level(filename):
+    filename = "data/" + filename
+    # читаем уровень, убирая символы перевода строки
+    with open(filename, 'r') as mapFile:
+        level_map = [line.strip() for line in mapFile]
+    # и подсчитываем максимальную длину
+    max_width = max(map(len, level_map))
+    # дополняем каждую строку пустыми клетками ('.')
+    return list(map(lambda x: x.ljust(max_width, '.'), level_map))
 
-    def set_view(self, cell_size):
-        self.cell_size = cell_size
 
-    def render(self, screen):
-        pass
+player = None
+all_sprites = pygame.sprite.Group()
+tiles_group = pygame.sprite.Group()
+player_group = pygame.sprite.Group()
+enemy_group = pygame.sprite.Group()
 
-    def get_cell(self, mouse_pos):
-        pass
+tile_width = tile_height = 64
+tile_images = {
+    'road': pygame.transform.scale(load_image('road.png'), (tile_width, tile_height)),
+    'grass': pygame.transform.scale(load_image('grass.png'), (tile_width, tile_height)),
+    'place': pygame.transform.scale(load_image('place.png'), (tile_width, tile_height)),
+    'air_tower': pygame.transform.scale(load_image('air_tower_image.png', -1), (tile_width, tile_height)),
+    'ground_tower': pygame.transform.scale(load_image('ground_tower_image.png', -1), (tile_width, tile_height))
+}
 
-    def on_click(self, cell_cords):
-        pass
+player_image = pygame.transform.scale(load_image('player_image.png', -1), (tile_width, tile_height))
+air_enemy = pygame.transform.scale(load_image('air_enemy_image.png', -1), (tile_width, tile_height))
+ground_enemy = pygame.transform.scale(load_image('ground_enemy_image.png', -1), (tile_width, tile_height))
 
-    def get_click(self, mouse_pos):
-        pass
+
+class Tile(pygame.sprite.Sprite):
+    def __init__(self, tile_type, pos_x, pos_y):
+        super().__init__(tiles_group, all_sprites)
+        self.image = tile_images[tile_type]
+        self.rect = self.image.get_rect().move(
+            tile_width * pos_x, tile_height * pos_y)
 
 
 class Player(pygame.sprite.Sprite):
     # Для нормальной картинки
-    image = load_image('player_image1.jpg', -1)
-    # Надо изменить размеры картинки на размеры клетки
-    image = pygame.transform.scale(image, (64, 64))
+    image = player_image
 
     def __init__(self, *group):
         super().__init__(*group)
@@ -64,6 +77,27 @@ class Player(pygame.sprite.Sprite):
     def update(self, dx, dy):
         self.rect.x += dx
         self.rect.y += dy
+
+
+def generate_level(level):
+    new_player, x, y = None, None, None
+    for y in range(len(level)):
+        for x in range(len(level[y])):
+            if level[y][x] == '.':
+                Tile('grass', x, y)
+            elif level[y][x] == '-':
+                Tile('road', x, y)
+            elif level[y][x] == 'h':
+                Tile('grass', x, y)
+                new_player = Player(x, y)
+            elif level[y][x] == 'g':
+                Tile('ground_tower', x, y)
+            elif level[y][x] == 'a':
+                Tile('air_tower', x, y)
+            elif level[y][x] == 'p':
+                Tile('place', x, y)
+    # вернем игрока, а также размер поля в клетках
+    return new_player, x, y
 
 
 def main():
