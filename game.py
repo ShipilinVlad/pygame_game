@@ -25,6 +25,7 @@ tiles_group = pygame.sprite.Group()
 places_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 enemy_group = pygame.sprite.Group()
+tower_group = pygame.sprite.Group()
 
 tile_width = tile_height = 64
 size = tile_width * 8, tile_height * 8
@@ -60,15 +61,20 @@ class Tile(pygame.sprite.Sprite):
             tile_width * pos_x, tile_height * pos_y)
 
 
+class Tower(pygame.sprite.Sprite):
+    def __init__(self, tile_type, pos_x, pos_y):
+        super().__init__(tower_group, all_sprites)
+        self.image = tile_images[tile_type]
+        self.rect = self.image.get_rect().move(
+            tile_width * pos_x, tile_height * pos_y)
+
+
 class Place(pygame.sprite.Sprite):
     def __init__(self, tile_type, pos_x, pos_y):
         super().__init__(places_group, all_sprites)
         self.image = tile_images[tile_type]
         self.rect = self.image.get_rect().move(
             tile_width * pos_x, tile_height * pos_y)
-
-    def place_tower(self, tower_type, pos_x, pos_y):
-        pass
 
 
 class Player(pygame.sprite.Sprite):
@@ -106,14 +112,31 @@ class Board:
     def __init__(self,  width, height):
         self.width = width
         self.height = height
-        self.board = [[0] * width for _ in range(height)]
+        self.board = load_level('lvl1.txt')
         self.cell_size = 64
 
     def render(self):
+        for i in range(self.height):
+            for j in range(self.width):
+                cell = self.board[i][j]
+                coords = (j * self.cell_size, i * self.cell_size, self.cell_size, self.cell_size)
+                if cell == '.':
+                    Tile('grass', j, i)
+                elif cell == '-':
+                    Tile('road', j, i)
+                elif cell == 'g':
+                    Tile('place', j, i)
+                    Tile('ground_tower', j, i)
+                elif cell == 'a':
+                    Tile('place', j, i)
+                    Tile('air_tower', j, i)
+                elif cell == 'p':
+                    Place('place', j, i)
         tiles_group.draw(screen)
         places_group.draw(screen)
         enemy_group.draw(screen)
         player_group.draw(screen)
+        tower_group.draw(screen)
 
 
 def main():
@@ -136,6 +159,12 @@ def main():
                     player_group.update(0, -64)
                 elif event.key == pygame.K_DOWN:
                     player_group.update(0, 64)
+                elif event.key == pygame.K_1:
+                    if board.board[player.rect.y // 64][player.rect.x // 64] == 'p':
+                        Tower('ground_tower', player.rect.x // 64, player.rect.y // 64)
+                elif event.key == pygame.K_2:
+                    if board.board[player.rect.y // 64][player.rect.x // 64] == 'p':
+                        Tower('air_tower', player.rect.x // 64, player.rect.y // 64)
         screen.fill((0, 0, 0))
         board.render()
         clock.tick(fps)
