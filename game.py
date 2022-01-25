@@ -5,8 +5,9 @@ import random
 
 
 class Monster:
-    def __init__(self, x, y, m_type, par, board_width, n, board, all_sprites):
+    def __init__(self, x, y, m_type, par, board_width, n, board, all_sprites, board_state):
         self.board = board
+        self.board_state = board_state
         self.x, self.y, self.m_type, self.n = x, y, m_type, n
         self.width, self.nx, self.ny = board_width, 1, 0
         self.par_x, self.par_y = par, par
@@ -27,21 +28,20 @@ class Monster:
                 self.top + self.coord[1] * self.width <= self.y <= self.top + (self.coord[1] + 1) * self.width:
             self.x += self.par_x * self.nx
             self.y += self.par_y * self.ny
-
             if self.rotate and self.x % self.width > self.width // 2 and self.nx == 1:
-                self.ny = self.nx
+                self.ny = self.nx - (2 * int(self.rotate == 'left') * self.nx)
                 self.nx = 0
                 self.rotate = False
             elif self.rotate and self.y % self.width > self.width // 2 and self.ny == 1:
-                self.nx = -self.ny
+                self.nx = -self.ny - (2 * int(self.rotate == 'left') * -self.ny)
                 self.ny = 0
                 self.rotate = False
             elif self.rotate and self.x % self.width < self.width // 2 and self.nx == -1:
-                self.ny = self.nx
+                self.ny = self.nx - (2 * int(self.rotate == 'left') * self.nx)
                 self.nx = 0
                 self.rotate = False
             elif self.rotate and self.y % self.width < self.width // 2 and self.ny == -1:
-                self.nx = -self.ny
+                self.nx = -self.ny - (2 * int(self.rotate == 'left') * -self.ny)
                 self.ny = 0
                 self.rotate = False
         else:
@@ -51,6 +51,25 @@ class Monster:
             if self.coord[0] == self.n - 1 and self.nx == 1 or self.coord[1] == self.n - 1 and self.ny == 1 or\
                     self.coord[0] == 0 and self.nx == -1 or self.coord[1] == 0 and self.ny == -1:
                 self.rotate = True
+            elif self.board_state.board[self.coord[1] + self.ny][self.coord[0] + self.nx] == 0:
+                self.rotate = True
+            if self.rotate:
+                if self.coord[0] == 0 and self.ny == -1 or self.coord[0] == self.n - 1 and self.ny == 1 or\
+                        self.coord[1] == 0 and self.nx == 1 or self.coord[1] == self.n - 1 and self.nx == -1:
+                    self.rotate = 'right'
+                    print(1)
+                elif self.coord[0] == 0 and self.ny == 1 or self.coord[0] == self.n - 1 and self.ny == -1 or \
+                        self.coord[1] == 0 and self.nx == -1 or self.coord[1] == self.n - 1 and self.nx == 1:
+                    self.rotate = 'left'
+                    print(2)
+                elif self.board_state.board[self.coord[1] + self.nx * ((self.ny - self.nx) ** 2)]\
+                    [self.coord[0] + self.ny * (-(self.nx - self.ny) ** 2)] == 0:
+                    self.rotate = 'left'
+                    print(3)
+                else:
+                    self.rotate = 'right'
+                    print(4)
+            print(self.rotate)
 
 
 class Board:
@@ -159,11 +178,11 @@ if __name__ == '__main__':
                 if event.button == 1:
                     start = True
                     monster_type = random.choice(['ground', 'flying'])
-                    obj_monster = Monster(left_top, left_top, monster_type, par, board_width, n, board, all_sprites)
+                    obj_monster = Monster(left_top, left_top, monster_type, par, board_width, n, board, all_sprites,
+                                          board_state)
                     monsters.append(obj_monster)
                     board.monster_spawn(0, 0, obj_monster.monster)
                 else:
-                    print(1)
                     board_state.get_click(event.pos)
         if start:
             for i in range(len(monsters)):
