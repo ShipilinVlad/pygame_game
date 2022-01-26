@@ -266,11 +266,11 @@ if __name__ == '__main__':
                 elif event.button == 2:
                     board_state.get_click(event.pos)
         if start:
-            for i in range(len(monsters)):
-                monsters[i].move()
-                if board_moving.check_monster_kill(monsters[i].coord[0], monsters[i].coord[1], lvl):
-                    monsters[i].monster.kill()
-                    monsters.remove(monsters[i])
+            for monster in monsters:
+                monster.move()
+                if board_moving.check_monster_kill(monster.coord[0], monster.coord[1], lvl):
+                    monster.monster.kill()
+                    monsters.remove(monster)
         screen.fill((0, 0, 0))
         board_background.render(screen)
         board_state.render(screen)
