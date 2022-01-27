@@ -5,12 +5,12 @@ import random
 
 
 class Monster:
-    def __init__(self, x, y, m_type, par, board_width, n, board, board_state, lvl):
-        self.x, self.y, self.nx, self.ny = x, board_width / 2, 1, 0
-        self.board = board
+    def __init__(self, x, y, m_type, par):
+        self.x, self.y, self.nx, self.ny = x, y, 1, 0
+        self.x, self.y = 0, cell_width / 2
         self.board_state = board_state
         self.m_type, self.n = m_type, n
-        self.width = board_width
+        self.width = cell_width
         self.par_x, self.par_y = par, par
         self.coord = [0, 0]
         self.left, self.top = 0, 0
@@ -19,13 +19,12 @@ class Monster:
         if self.m_type == 'flying':
             monster_image = load_image("eye.png")
         else:
-            monster_image = load_image("skel.png")
+            monster_image = load_image("skell.png")
         self.monster = pygame.sprite.Sprite(moving_sprites)
         self.monster.image = monster_image
         self.monster.rect = self.monster.image.get_rect()
-        self.board.board[0][0] = self.monster
+        board_moving.board[0][0] = self.monster
         self.lvl = lvl
-
 
     def move(self):
         if self.left + self.coord[0] * self.width <= self.x <= self.left + (self.coord[0] + 1) * self.width and \
@@ -64,17 +63,17 @@ class Monster:
                 elif self.coord[0] == 0 and self.ny == 1 or self.coord[0] == self.n - 1 and self.ny == -1 or \
                         self.coord[1] == 0 and self.nx == -1 or self.coord[1] == self.n - 1 and self.nx == 1:
                     self.rotate = 'left'
-                elif self.lvl[self.coord[1] + self.nx * ((self.ny - self.nx) ** 2)]\
-                    [self.coord[0] + self.ny * (-(self.nx - self.ny) ** 2)] not in ('r', 'c'):
+                elif (self.lvl[self.coord[1] + self.nx * ((self.ny - self.nx) ** 2)]
+                      [self.coord[0] + self.ny * (-(self.nx - self.ny) ** 2)] not in ('r', 'c')):
                     self.rotate = 'left'
                 else:
                     self.rotate = 'right'
 
+
 class Tower:
-    def __init__(self, x, y, t_type, board_moving):
-        self.x, self.y = x, y
+    def __init__(self, x, y, t_type):
+        self.x, self.y = int(x), int(y)
         self.t_type = t_type
-        self.board_moving = board_moving
         if self.t_type == 'flying':
             tower_image = load_image("archer.png")
         else:
@@ -82,25 +81,26 @@ class Tower:
         self.tower = pygame.sprite.Sprite(moving_sprites)
         self.tower.image = tower_image
         self.tower.rect = self.tower.image.get_rect()
-        self.board_moving.board[y][x] = self.tower
+        board_moving.board[self.y][self.x] = self.tower
 
     def damage_monsters_near(self):
         for i in range(-1, 2):
             for j in range(-1, 2):
-                if 0 <= i + self.y < len(self.board_moving.board):
-                    if 0 <= j + self.x < len(self.board_moving.board):
-                        for monster in monsters:
-                            if monster.coord == [j + self.x, i + self.y]:
-                                if monster.m_type == self.t_type:
-                                    monster.hp -= 1
-                                    sound1.play()
-                                    return
+                if 0 <= i + self.y < n and 0 <= j + self.x < n:
+                    for monster_to_kill in monsters:
+                        if monster_to_kill.coord == [j + self.x, i + self.y]:
+                            if monster_to_kill.m_type == self.t_type:
+                                monster_to_kill.hp -= 1
+                                if self.t_type == 'flying':
+                                    pygame.mixer.Sound('data/arrow.wav').play()
+                                else:
+                                    pygame.mixer.Sound('data/wizard.wav').play()
+                                return
+
+
 class Board:
-    def __init__(self, width, height):
-        self.hp = 9999
-        self.width = width
-        self.height = height
-        self.board = [[0] * width for _ in range(height)]
+    def __init__(self):
+        self.board = [[0] * n for _ in range(n)]
         self.left = 10
         self.top = 10
         self.cell_size = 16
@@ -110,35 +110,13 @@ class Board:
         self.top = top
         self.cell_size = cell_size
 
-    def render(self, screen):
-        for i in range(self.height):
-            for j in range(self.width):
+    def render(self):
+        for i in range(n):
+            for j in range(n):
                 cell = self.board[i][j]
-                coords = (self.left + j * self.cell_size, self.top + i * self.cell_size, self.cell_size, self.cell_size)
+                coord = (self.left + j * self.cell_size, self.top + i * self.cell_size, self.cell_size, self.cell_size)
                 if cell:
-                    cell.rect.x, cell.rect.y = coords[0], coords[1]
-
-
-    def get_click(self, mouse_pos):
-        cell = self.get_cell(mouse_pos)
-        self.on_click(cell)
-
-    def on_click(self, cell_coords):
-        print(cell_coords)
-        if cell_coords:
-            cell_coords = cell_coords[1], cell_coords[0]
-            road = pygame.sprite.Sprite(state_sprites)
-            road.image = load_image("beta.png")
-            road.rect = road.image.get_rect()
-            self.board[cell_coords[0]][cell_coords[1]] = road
-
-
-    def get_cell(self, mouse_pos):
-        mouse_x, mouse_y = mouse_pos
-        if mouse_x < self.left or mouse_y < self.top or mouse_x > self.left + self.cell_size * self.width\
-                or mouse_y > self.top + self.cell_size * self.height:
-            return None
-        return ((mouse_x - self.left) // self.cell_size, (mouse_y - self.top) // self.cell_size)
+                    cell.rect.x, cell.rect.y = coord[0], coord[1]
 
     def move(self, x, y, move_x, move_y, sprite):
         self.board[y][x] = 0
@@ -146,8 +124,8 @@ class Board:
 
     def fill(self, name):
         text_lvl = load_level(name)
-        for i in range(self.width):
-            for j in range(self.height):
+        for i in range(n):
+            for j in range(n):
                 if text_lvl[i][j] == '0':
                     continue
                 elem = pygame.sprite.Sprite(back_sprites)
@@ -160,59 +138,62 @@ class Board:
                 elem.rect = elem.image.get_rect()
                 self.board[i][j] = elem
 
-    def check_tower(self, x, y, lvl, moving_board):
-        if lvl[y][x] == '0' and moving_board.board[y][x] == 0:
-            return True
-        return False
-
-    def check_monster_kill(self, x, y, lvl):
-        if lvl[y][x] == 'c':
-            return True
-        return False
 
 class Player:
-    def __init__(self, x, y, n, board_player):
+    def __init__(self, x, y):
         self.player = pygame.sprite.Sprite(hero_sprite)
         self.player.image = load_image("hero.png")
         self.player.rect = self.player.image.get_rect()
-        self.coords = [x, y]
+        self.coord = [x, y]
         self.board_player = board_player
         self.board_player.board[x][y] = self.player
         self.n = n
 
     def update(self, dx, dy):
-        if 0 <= self.coords[0] + dx < self.n and dx != 0:
-            self.board_player.move(self.coords[0], self.coords[1], dx, dy, self.player)
-            self.coords[0] += dx
-        elif 0 <= self.coords[1] + dy < self.n and dy != 0:
-            self.board_player.move(self.coords[0], self.coords[1], dx, dy, self.player)
-            self.coords[1] += dy
+        if 0 <= self.coord[0] + dx < self.n and dx:
+            self.board_player.move(self.coord[0], self.coord[1], dx, dy, self.player)
+            self.coord[0] += dx
+        elif 0 <= self.coord[1] + dy < self.n and dy:
+            self.board_player.move(self.coord[0], self.coord[1], dx, dy, self.player)
+            self.coord[1] += dy
 
 
-def load_image(name, colorkey=None):
+def load_image(name, color_key=None):
     fullname = os.path.join('data', name)
     # если файл не существует, то выходим
     if not os.path.isfile(fullname):
         print(f"Файл с изображением '{fullname}' не найден")
         sys.exit()
     image = pygame.image.load(fullname)
-    if colorkey is not None:
+    if color_key is not None:
         image = image.convert()
-        if colorkey == -1:
-            colorkey = image.get_at((0, 0))
-        image.set_colorkey(colorkey)
+        if color_key == -1:
+            color_key = image.get_at((0, 0))
+        image.set_colorkey(color_key)
     else:
         image = image.convert_alpha()
     return image
+
 
 def load_level(filename):
     filename = "data/" + filename
     with open(filename, 'r') as mapFile:
         level_map = [line.strip() for line in mapFile]
     max_width = max(map(len, level_map))
-    lvl = list(map(lambda x: x.ljust(max_width, '.'), level_map))
-    lvl = [list(line) for line in lvl]
-    return lvl
+    level = list(map(lambda x: x.ljust(max_width, '.'), level_map))
+    level = [list(line) for line in level]
+    return level
+
+
+def check_tower(x, y):
+    return lvl[y][x] == '0' and board_moving.board[y][x] == 0
+
+
+def check_monster_kill(x, y):
+    if lvl[y][x] == 'c':
+        pygame.mixer.Sound('data/no_hp.wav').play()
+        return True
+    return False
 
 
 if __name__ == '__main__':
@@ -224,18 +205,17 @@ if __name__ == '__main__':
     score = 0
     health = 4
     pygame.display.set_caption("Я слежу за тобой")
-    size = width, height = 700, 700
-    screen = pygame.display.set_mode(size)
-    board_width = 64
+    screen = pygame.display.set_mode((700, 700))
+    cell_width = 64
     left_top = 0
-    board_moving = Board(n, n)
-    board_state = Board(n, n)
-    board_player = Board(n, n)
-    board_background = Board(n, n)
-    board_moving.set_view(left_top, left_top, board_width)
-    board_state.set_view(left_top, left_top, board_width)
-    board_player.set_view(left_top, left_top, board_width)
-    board_background.set_view(left_top, left_top, board_width)
+    board_moving = Board()
+    board_state = Board()
+    board_player = Board()
+    board_background = Board()
+    board_moving.set_view(left_top, left_top, cell_width)
+    board_state.set_view(left_top, left_top, cell_width)
+    board_player.set_view(left_top, left_top, cell_width)
+    board_background.set_view(left_top, left_top, cell_width)
     back_sprites = pygame.sprite.Group()
     moving_sprites = pygame.sprite.Group()
     state_sprites = pygame.sprite.Group()
@@ -248,8 +228,10 @@ if __name__ == '__main__':
     # Поменять скорость
     monsters_v = 1
     fps = 60
-    par_monsters = monsters_v * board_width / fps
-    player = Player(7, 7, n, board_player)
+    par_monsters = monsters_v * cell_width / fps
+    player = Player(7, 7)
+    pygame.mixer.music.load('data/music.mp3')
+    pygame.mixer.music.play()
     lvl = load_level('lvl1.txt')
     sound1 = pygame.mixer.Sound('data/arrow.wav')
     running = True
@@ -269,29 +251,29 @@ if __name__ == '__main__':
                 elif event.key == pygame.K_DOWN:
                     player.update(0, 1)
                 elif event.key == pygame.K_1:
-                    if board_state.check_tower(player.coords[0], player.coords[1], lvl, board_moving) and money >= 10:
-                        towers.append(Tower(player.coords[0], player.coords[1], 'ground', board_moving))
+                    if check_tower(player.coord[0], player.coord[1]) and money >= 10:
+                        towers.append(Tower(player.coord[0], player.coord[1], 'ground'))
                         money -= 10
                 elif event.key == pygame.K_2:
-                    if board_state.check_tower(player.coords[0], player.coords[1], lvl, board_moving) and money >= 10:
-                        towers.append(Tower(player.coords[0], player.coords[1], 'flying', board_moving))
+                    if check_tower(player.coord[0], player.coord[1]) and money >= 10:
+                        towers.append(Tower(player.coord[0], player.coord[1], 'flying'))
                         money -= 10
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 2:
-                    board_state.get_click(event.pos)
         if monsters_num != 0 and board_moving.board[left_top][left_top] == 0:
             start = True
             monster_type = random.choice(['ground', 'flying'])
             a = [0] * int(1.5 * fps) + [1]
             if random.choice(a):
-                obj_monster = Monster(left_top, left_top, monster_type, par_monsters, board_width, n,
-                                    board_moving, board_state, lvl)
+                obj_monster = Monster(left_top, left_top, monster_type, par_monsters)
                 monsters.append(obj_monster)
                 monsters_num -= 1
         if start:
             for monster in monsters:
                 monster.move()
-                if board_moving.check_monster_kill(monster.coord[0], monster.coord[1], lvl) or monster.hp <= 0:
+                if check_monster_kill(monster.coord[0], monster.coord[1]) or monster.hp <= 0:
+                    if monster.m_type == 'ground' and monster.hp <= 0:
+                        pygame.mixer.Sound('data/skell.wav').play()
+                    elif monster.m_type == 'flying' and monster.hp <= 0:
+                        pygame.mixer.Sound('data/eye.wav').play()
                     monster.monster.kill()
                     monsters.remove(monster)
                     money += 5
@@ -303,10 +285,10 @@ if __name__ == '__main__':
             # Переход на след. уровень или конечный экран с выводом счета
             pass
         screen.fill((0, 0, 0))
-        board_background.render(screen)
-        board_state.render(screen)
-        board_moving.render(screen)
-        board_player.render(screen)
+        board_background.render()
+        board_state.render()
+        board_moving.render()
+        board_player.render()
         clock.tick(fps)
         back_sprites.draw(screen)
         state_sprites.draw(screen)
