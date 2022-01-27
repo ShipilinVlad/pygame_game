@@ -54,7 +54,8 @@ class Monster:
             if self.coord[0] == self.n - 1 and self.nx == 1 or self.coord[1] == self.n - 1 and self.ny == 1 or\
                     self.coord[0] == 0 and self.nx == -1 or self.coord[1] == 0 and self.ny == -1:
                 self.rotate = True
-            elif self.lvl[self.coord[1] + self.ny][self.coord[0] + self.nx] not in ('r', 'c'):
+            elif self.lvl[self.coord[1] + self.ny][self.coord[0] + self.nx] not in ('r1', 'r2', 'r3', 'r4',
+                                                                                    'r5', 'r6', 'ca', 'xx'):
                 self.rotate = True
             if self.rotate:
                 if self.coord[0] == 0 and self.ny == -1 or self.coord[0] == self.n - 1 and self.ny == 1 or\
@@ -64,7 +65,8 @@ class Monster:
                         self.coord[1] == 0 and self.nx == -1 or self.coord[1] == self.n - 1 and self.nx == 1:
                     self.rotate = 'left'
                 elif (self.lvl[self.coord[1] + self.nx * ((self.ny - self.nx) ** 2)]
-                      [self.coord[0] + self.ny * (-(self.nx - self.ny) ** 2)] not in ('r', 'c')):
+                      [self.coord[0] + self.ny * (-(self.nx - self.ny) ** 2)] not in ('r1', 'r2', 'r3', 'r4',
+                                                                                      'r5', 'r6', 'ca', 'xx')):
                     self.rotate = 'left'
                 else:
                     self.rotate = 'right'
@@ -92,15 +94,19 @@ class Tower:
                             if monster_to_kill.m_type == self.t_type:
                                 monster_to_kill.hp -= 1
                                 if self.t_type == 'flying':
-                                    pygame.mixer.Sound('data/arrow.wav').play()
+                                    sound = pygame.mixer.Sound('data/arrow.wav')
+                                    sound.set_volume(0.4)
+                                    sound.play()
                                 else:
-                                    pygame.mixer.Sound('data/wizard.wav').play()
+                                    sound = pygame.mixer.Sound('data/wizard.wav')
+                                    sound.set_volume(0.4)
+                                    sound.play()
                                 return
 
 
 class Board:
     def __init__(self):
-        self.board = [[0] * n for _ in range(n)]
+        self.board = [[no_sprite] * n for _ in range(n)]
         self.left = 10
         self.top = 10
         self.cell_size = 16
@@ -115,26 +121,81 @@ class Board:
             for j in range(n):
                 cell = self.board[i][j]
                 coord = (self.left + j * self.cell_size, self.top + i * self.cell_size, self.cell_size, self.cell_size)
-                if cell:
-                    cell.rect.x, cell.rect.y = coord[0], coord[1]
+                try:
+                    if cell:
+                        cell.rect.x, cell.rect.y = coord[0], coord[1]
+                except AttributeError:
+                    pass
 
     def move(self, x, y, move_x, move_y, sprite):
-        self.board[y][x] = 0
+        self.board[y][x] = no_sprite
         self.board[y + move_y][x + move_x] = sprite
 
     def fill(self, name):
         text_lvl = load_level(name)
         for i in range(n):
             for j in range(n):
-                if text_lvl[i][j] == '0':
+                if text_lvl[i][j] == '00' or text_lvl[i][j] == 'xx':
                     continue
                 elem = pygame.sprite.Sprite(back_sprites)
-                if text_lvl[i][j] == '.':
-                    elem.image = pygame.transform.scale(load_image("grass.png"), (self.cell_size, self.cell_size))
-                elif text_lvl[i][j] == "r":
-                    elem.image = pygame.transform.scale(load_image("beta.png"), (self.cell_size, self.cell_size))
-                elif text_lvl[i][j] == "c":
+                if text_lvl[i][j] == '..':
+                    elem.image = pygame.transform.scale(load_image("background.png"), (self.cell_size, self.cell_size))
+                elif text_lvl[i][j] == "r1":
+                    elem.image = pygame.transform.scale(load_image("road.png"), (self.cell_size, self.cell_size))
+                elif text_lvl[i][j] == "r2":
+                    elem.image = pygame.transform.rotate(
+                        pygame.transform.scale(load_image("road.png"), (self.cell_size, self.cell_size)), 90)
+                elif text_lvl[i][j] == "r3":
+                    elem.image = pygame.transform.rotate(
+                        pygame.transform.scale(load_image("road1.png"), (self.cell_size, self.cell_size)), 90)
+                elif text_lvl[i][j] == "r4":
+                    elem.image = pygame.transform.rotate(
+                        pygame.transform.scale(load_image("road1.png"), (self.cell_size, self.cell_size)), 180)
+                elif text_lvl[i][j] == "r5":
+                    elem.image = pygame.transform.rotate(
+                        pygame.transform.scale(load_image("road1.png"), (self.cell_size, self.cell_size)), 270)
+                elif text_lvl[i][j] == "r6":
+                    elem.image = pygame.transform.scale(load_image("road1.png"), (self.cell_size, self.cell_size))
+                elif text_lvl[i][j] == "b0":
+                    elem.image = pygame.transform.scale(load_image("bush.png"), (self.cell_size, self.cell_size))
+                elif text_lvl[i][j] == "b1":
+                    elem.image = pygame.transform.scale(load_image("bush1.png"), (self.cell_size, self.cell_size))
+                elif text_lvl[i][j] == "ca":
+                    elem.image = pygame.transform.scale(load_image("house big.png"),
+                                                        (2 * self.cell_size, 2 * self.cell_size))
+                elif text_lvl[i][j] == "h0":
                     elem.image = pygame.transform.scale(load_image("house.png"), (self.cell_size, self.cell_size))
+                elif text_lvl[i][j] == "h1":
+                    elem.image = pygame.transform.scale(load_image("house1.png"), (self.cell_size, self.cell_size))
+                elif text_lvl[i][j] == "h2":
+                    elem.image = pygame.transform.scale(load_image("house2.png"), (self.cell_size, self.cell_size))
+                elif text_lvl[i][j] == "h3":
+                    elem.image = pygame.transform.scale(load_image("house3.png"), (self.cell_size, self.cell_size))
+                elif text_lvl[i][j] == "t0":
+                    elem.image = pygame.transform.scale(load_image("tree.png"), (self.cell_size, self.cell_size))
+                elif text_lvl[i][j] == "t1":
+                    elem.image = pygame.transform.scale(load_image("tree1.png"), (self.cell_size, self.cell_size))
+                elif text_lvl[i][j] == "wh":
+                    elem.image = pygame.transform.scale(load_image("wheat.png"), (self.cell_size, self.cell_size))
+                elif text_lvl[i][j] == "w1":
+                    elem.image = pygame.transform.scale(load_image("river.png"), (self.cell_size, self.cell_size))
+                elif text_lvl[i][j] == "w2":
+                    elem.image = pygame.transform.rotate(
+                        pygame.transform.scale(load_image("river.png"), (self.cell_size, self.cell_size)), 90)
+                elif text_lvl[i][j] == "w3":
+                    elem.image = pygame.transform.rotate(
+                        pygame.transform.scale(load_image("river1.png"), (self.cell_size, self.cell_size)), 90)
+                elif text_lvl[i][j] == "w4":
+                    elem.image = pygame.transform.rotate(
+                        pygame.transform.scale(load_image("river1.png"), (self.cell_size, self.cell_size)), 180)
+                elif text_lvl[i][j] == "w5":
+                    elem.image = pygame.transform.rotate(
+                        pygame.transform.scale(load_image("river1.png"), (self.cell_size, self.cell_size)), 270)
+                elif text_lvl[i][j] == "w6":
+                    elem.image = pygame.transform.scale(load_image("river1.png"), (self.cell_size, self.cell_size))
+                elif text_lvl[i][j] == "gr":
+                    elem.image = pygame.transform.scale(load_image("grass.png"), (self.cell_size, self.cell_size))
+
                 elem.rect = elem.image.get_rect()
                 self.board[i][j] = elem
 
@@ -178,36 +239,45 @@ def load_image(name, color_key=None):
 def load_level(filename):
     filename = "data/" + filename
     with open(filename, 'r') as mapFile:
-        level_map = [line.strip() for line in mapFile]
-    max_width = max(map(len, level_map))
-    level = list(map(lambda x: x.ljust(max_width, '.'), level_map))
-    level = [list(line) for line in level]
+        level = [line.split() for line in mapFile]
     return level
 
 
+def check_monster(x, y):
+    if (pygame.image.tostring(board_moving.board[y][x].image, "RGB") ==
+            pygame.image.tostring(board_moving.board[n - 1][n - 1].image, "RGB")):
+        return True
+    return False
+
+
 def check_tower(x, y):
-    return lvl[y][x] == '0' and board_moving.board[y][x] == 0
+    if (pygame.image.tostring(board_moving.board[y][x].image, "RGB") ==
+            pygame.image.tostring(board_moving.board[n - 1][n - 1].image, "RGB")):
+        return lvl[y][x] in ('00', 'b0', 'b1', 'gr')
+    return False
 
 
 def check_monster_kill(x, y):
-    if lvl[y][x] == 'c':
+    if lvl[y][x] == 'ca':
         pygame.mixer.Sound('data/no_hp.wav').play()
         return True
     return False
 
 
 if __name__ == '__main__':
-    counter = 0
     pygame.init()
+    counter = 0
     n = 8
     monsters_num = 10
     money = 20
     score = 0
     health = 4
-    pygame.display.set_caption("Я слежу за тобой")
+    pygame.display.set_caption("Йопики у ворот")
     screen = pygame.display.set_mode((700, 700))
     cell_width = 64
     left_top = 0
+    no_sprite = pygame.sprite.Sprite()
+    no_sprite.image = load_image('no_image.png')
     board_moving = Board()
     board_state = Board()
     board_player = Board()
@@ -220,7 +290,7 @@ if __name__ == '__main__':
     moving_sprites = pygame.sprite.Group()
     state_sprites = pygame.sprite.Group()
     hero_sprite = pygame.sprite.Group()
-    board_background.fill('lvl1_back.txt')
+    board_background.fill('lvl_back.txt')
     board_state.fill('lvl1.txt')
     monsters = []
     towers = []
@@ -229,22 +299,32 @@ if __name__ == '__main__':
     monsters_v = 1
     fps = 60
     par_monsters = monsters_v * cell_width / fps
-    player = Player(7, 7)
+    player = Player(6, 6)
     pygame.mixer.music.load('data/music.mp3')
+    pygame.mixer.music.set_volume(0.7)
     pygame.mixer.music.play()
     lvl = load_level('lvl1.txt')
-    sound1 = pygame.mixer.Sound('data/arrow.wav')
+    hero_right = True
     running = True
     start = False
     pygame.display.flip()
+    print(board_moving.board)
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RIGHT:
+                    if not hero_right:
+                        board_player.board[player.coord[1]][player.coord[0]].image = pygame.transform.flip(
+                            board_player.board[player.coord[1]][player.coord[0]].image, True, False)
+                        hero_right = True
                     player.update(1, 0)
                 elif event.key == pygame.K_LEFT:
+                    if hero_right:
+                        board_player.board[player.coord[1]][player.coord[0]].image = pygame.transform.flip(
+                            board_player.board[player.coord[1]][player.coord[0]].image, True, False)
+                        hero_right = False
                     player.update(-1, 0)
                 elif event.key == pygame.K_UP:
                     player.update(0, -1)
@@ -258,7 +338,7 @@ if __name__ == '__main__':
                     if check_tower(player.coord[0], player.coord[1]) and money >= 10:
                         towers.append(Tower(player.coord[0], player.coord[1], 'flying'))
                         money -= 10
-        if monsters_num != 0 and board_moving.board[left_top][left_top] == 0:
+        if monsters_num != 0 and check_monster(0, 0):
             start = True
             monster_type = random.choice(['ground', 'flying'])
             a = [0] * int(1.5 * fps) + [1]
