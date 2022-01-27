@@ -6,7 +6,6 @@ import random
 
 class Monster:
     def __init__(self, x, y, m_type, par, board_width, n, board, board_state, lvl):
-        # Для первого уровня!!!
         self.x, self.y, self.nx, self.ny = x, board_width / 2, 1, 0
         self.board = board
         self.board_state = board_state
@@ -16,6 +15,7 @@ class Monster:
         self.coord = [0, 0]
         self.left, self.top = 0, 0
         self.rotate = False
+        self.hp = random.choice([3, 4])
         if self.m_type == 'flying':
             monster_image = load_image("eye.png")
         else:
@@ -84,8 +84,20 @@ class Tower:
         self.tower.rect = self.tower.image.get_rect()
         self.board_moving.board[y][x] = self.tower
 
+    def damage_monsters_near(self):
+        for i in range(-1, 2):
+            for j in range(-1, 2):
+                if 0 <= i + self.y < len(self.board_moving.board):
+                    if 0 <= j + self.x < len(self.board_moving.board):
+                        for monster in monsters:
+                            if monster.coord == [j + self.x, i + self.y]:
+                                if monster.m_type == self.t_type:
+                                    monster.hp -= 1
+                                    sound1.play()
+                                    return
 class Board:
     def __init__(self, width, height):
+        self.hp = 9999
         self.width = width
         self.height = height
         self.board = [[0] * width for _ in range(height)]
@@ -105,7 +117,6 @@ class Board:
                 coords = (self.left + j * self.cell_size, self.top + i * self.cell_size, self.cell_size, self.cell_size)
                 if cell:
                     cell.rect.x, cell.rect.y = coords[0], coords[1]
-                pygame.draw.rect(screen, pygame.Color('black'), coords, 2)
 
 
     def get_click(self, mouse_pos):
@@ -156,15 +167,8 @@ class Board:
 
     def check_monster_kill(self, x, y, lvl):
         if lvl[y][x] == 'c':
-            return [True, 'c']
-        else:
-            for i in range(-1, 2):
-                for j in range(-1, 2):
-                    pass
-                    # if i != j != 0 and 0 <= y + i < n and 0 <= x + i < n:
-                    #     if self.board[y + i][x + j]: # Проверка является ли башней
-                    #         return [True, 'Something'] # Вместо Somethimg название башни
-        return [False, None]
+            return True
+        return False
 
 class Player:
     def __init__(self, x, y, n, board_player):
@@ -212,9 +216,10 @@ def load_level(filename):
 
 
 if __name__ == '__main__':
+    counter = 0
     pygame.init()
     n = 8
-    monsters_num = 1 # 20
+    monsters_num = 10
     money = 20
     score = 0
     health = 4
@@ -241,11 +246,12 @@ if __name__ == '__main__':
     towers = []
     clock = pygame.time.Clock()
     # Поменять скорость
-    monsters_v = 0.5
+    monsters_v = 1
     fps = 60
     par_monsters = monsters_v * board_width / fps
     player = Player(7, 7, n, board_player)
     lvl = load_level('lvl1.txt')
+    sound1 = pygame.mixer.Sound('data/arrow.wav')
     running = True
     start = False
     pygame.display.flip()
@@ -276,18 +282,23 @@ if __name__ == '__main__':
         if monsters_num != 0 and board_moving.board[left_top][left_top] == 0:
             start = True
             monster_type = random.choice(['ground', 'flying'])
-            obj_monster = Monster(left_top, left_top, monster_type, par_monsters, board_width, n,
-                                  board_moving, board_state, lvl)
-            monsters.append(obj_monster)
-            monsters_num -= 1
+            a = [0] * int(1.5 * fps) + [1]
+            if random.choice(a):
+                obj_monster = Monster(left_top, left_top, monster_type, par_monsters, board_width, n,
+                                    board_moving, board_state, lvl)
+                monsters.append(obj_monster)
+                monsters_num -= 1
         if start:
             for monster in monsters:
                 monster.move()
-                if board_moving.check_monster_kill(monster.coord[0], monster.coord[1], lvl)[0]:
+                if board_moving.check_monster_kill(monster.coord[0], monster.coord[1], lvl) or monster.hp <= 0:
                     monster.monster.kill()
                     monsters.remove(monster)
-                    if board_moving.check_monster_kill(monster.coord[0], monster.coord[1], lvl)[1] != 'c':
-                        money += random.choice([0, 1]) * 5
+                    money += 5
+            if counter >= 60:
+                for tower in towers:
+                    tower.damage_monsters_near()
+                counter = 0
         if not len(monsters):
             # Переход на след. уровень или конечный экран с выводом счета
             pass
@@ -302,4 +313,5 @@ if __name__ == '__main__':
         moving_sprites.draw(screen)
         hero_sprite.draw(screen)
         pygame.display.flip()
+        counter += 1
     pygame.quit()
