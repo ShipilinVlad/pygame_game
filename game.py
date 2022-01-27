@@ -272,9 +272,9 @@ if __name__ == '__main__':
     money = 20
     score = 0
     health = 4
-    pygame.display.set_caption("Йопики у ворот")
-    screen = pygame.display.set_mode((700, 700))
     cell_width = 64
+    pygame.display.set_caption("Йопики у ворот")
+    screen = pygame.display.set_mode((n * cell_width + cell_width * 3, n * cell_width + cell_width))
     left_top = 0
     no_sprite = pygame.sprite.Sprite()
     no_sprite.image = load_image('no_image.png')
@@ -292,6 +292,12 @@ if __name__ == '__main__':
     hero_sprite = pygame.sprite.Group()
     board_background.fill('lvl_back.txt')
     board_state.fill('lvl1.txt')
+    hp_image = load_image("hp.png")
+    money_image = load_image("coin.png")
+    score_image = pygame.transform.scale(load_image("no_image.png", -1), (64, 64))  # Поменять
+    buttons_image = pygame.transform.scale(load_image("buttons.png"), (cell_width * 3, cell_width * 2))
+    image_1 = pygame.transform.scale(load_image("1.png"), (64, 64))
+    image_2 = pygame.transform.scale(load_image("2.png"), (64, 64))
     monsters = []
     towers = []
     clock = pygame.time.Clock()
@@ -357,6 +363,8 @@ if __name__ == '__main__':
                     monster.monster.kill()
                     monsters.remove(monster)
                     money += 5
+                    if check_monster_kill(monster.coord[0], monster.coord[1]):
+                        health -= 1
             if counter >= 60:
                 for tower in towers:
                     tower.damage_monsters_near()
@@ -374,6 +382,69 @@ if __name__ == '__main__':
         state_sprites.draw(screen)
         moving_sprites.draw(screen)
         hero_sprite.draw(screen)
+
+        hp_surface = pygame.Surface((n * cell_width // 3, cell_width))
+        hp_surface.blit(hp_image, (0, 0))
+        hp_font = pygame.font.Font(None, 64)
+        hp_text = hp_font.render(f"{health}", True, pygame.color.Color('red'))
+        hp_text_x = 64
+        hp_text_y = cell_width // 2 - hp_text.get_height() // 2
+        hp_surface.blit(hp_text, (hp_text_x, hp_text_y))
+        screen.blit(hp_surface, (0, n * cell_width))
+
+        money_surface = pygame.Surface((n * cell_width // 3, cell_width))
+        money_surface.blit(money_image, (0, 0))
+        money_font = pygame.font.Font(None, 64)
+        money_text = money_font.render(f"{money}", True, pygame.color.Color('yellow'))
+        money_text_x = 64
+        money_text_y = cell_width // 2 - money_text.get_height() // 2
+        money_surface.blit(money_text, (money_text_x, money_text_y))
+        screen.blit(money_surface, (n * cell_width // 3, n * cell_width))
+
+        score_surface = pygame.Surface((n * cell_width // 3, cell_width))
+        score_surface.blit(score_image, (0, 0))
+        score_font = pygame.font.Font(None, 64)
+        score_text = score_font.render(f"{score}", True, pygame.color.Color('green'))
+        score_text_x = 64
+        score_text_y = cell_width // 2 - score_text.get_height() // 2
+        score_surface.blit(score_text, (score_text_x, score_text_y))
+        screen.blit(score_surface, (n * cell_width // 3 * 2, n * cell_width))
+
+        navigation_surface = pygame.Surface((cell_width * 3, cell_width * 2.5))
+        navigation_surface.blit(buttons_image, (0, cell_width * 0.5))
+        navigation_font = pygame.font.Font(None, 45)
+        navigation_text = navigation_font.render("Управление", True, pygame.color.Color('white'))
+        navigation_text_x = 0
+        navigation_text_y = 0
+        navigation_surface.blit(navigation_text, (navigation_text_x, navigation_text_y))
+        screen.blit(navigation_surface, (n * cell_width, 0))
+
+        surface_1 = pygame.Surface((cell_width * 3, cell_width * 2))
+        surface_1.blit(image_1, (0, cell_width * 1))
+        surface_1_font = pygame.font.Font(None, 64)
+        surface_1_text = surface_1_font.render("Маг", True, pygame.color.Color('white'))
+        surface_1_text_x = 0
+        surface_1_text_y = 0
+        surface_1.blit(surface_1_text, (surface_1_text_x, surface_1_text_y))
+        surface_1_text_2 = surface_1_font.render("(земля)", True, pygame.color.Color('white'))
+        surface_1_text_2_x = 0
+        surface_1_text_2_y = cell_width * 0.5
+        surface_1.blit(surface_1_text_2, (surface_1_text_2_x, surface_1_text_2_y))
+        screen.blit(surface_1, (n * cell_width, cell_width * 2.5))
+
+        surface_2 = pygame.Surface((cell_width * 3, cell_width * 2))
+        surface_2.blit(image_2, (0, cell_width * 1))
+        surface_2_font = pygame.font.Font(None, 64)
+        surface_2_text = surface_2_font.render("Лучник", True, pygame.color.Color('white'))
+        surface_2_text_x = 0
+        surface_2_text_y = 0
+        surface_2.blit(surface_2_text, (surface_2_text_x, surface_2_text_y))
+        surface_2_text_2 = surface_2_font.render("(воздух)", True, pygame.color.Color('white'))
+        surface_2_text_2_x = 0
+        surface_2_text_2_y = cell_width * 0.5
+        surface_2.blit(surface_2_text_2, (surface_2_text_2_x, surface_2_text_2_y))
+        screen.blit(surface_2, (n * cell_width, cell_width * 4.5))
+
         pygame.display.flip()
         counter += 1
     pygame.quit()
