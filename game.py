@@ -6,14 +6,19 @@ import random
 
 class Monster:
     def __init__(self, x, y, m_type, par):
-        self.x, self.y, self.nx, self.ny = x, y, 1, 0
-        self.x, self.y = 0, cell_width / 2
+        if x == 0 or x == n - 1:
+            self.x = x * n
+            self.y = cell_width // 2 + y * cell_width
+        else:
+            self.x = cell_width // 2 + x * cell_width
+            self.y = x * n
         self.board_state = board_state
         self.m_type, self.n = m_type, n
         self.width = cell_width
         self.par_x, self.par_y = par, par
-        self.coord = [0, 0]
+        self.coord = [x, y]
         self.left, self.top = 0, 0
+        self.nx, self.ny = nx, ny
         self.rotate = False
         self.hp = random.choice([3, 4])
         if self.m_type == 'flying':
@@ -264,11 +269,58 @@ def check_monster_kill(x, y):
     return False
 
 
-if __name__ == '__main__':
-    pygame.init()
-    counter = 0
+def terminate():
+    pygame.quit()
+    sys.exit()
+
+
+def start_screen():
+    intro_text = ["ЗАСТАВКА", "",
+                  "Правила игры",
+                  "Если в правилах несколько строк,",
+                  "приходится выводить их построчно"]
+
+    fon = pygame.transform.scale(load_image('eye.png'), (64 * 8, 64 * 8))
+    screen.blit(fon, (0, 0))
+    font = pygame.font.Font(None, 30)
+    text_coord = 50
+    for line in intro_text:
+        string_rendered = font.render(line, True, pygame.Color('white'))
+        intro_rect = string_rendered.get_rect()
+        text_coord += 10
+        intro_rect.top = text_coord
+        intro_rect.x = 10
+        text_coord += intro_rect.height
+        screen.blit(string_rendered, intro_rect)
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1:
+                    return levels['first']
+        pygame.display.flip()
+        clock.tick(fps)
+
+
+fps = 60
+pygame.init()
+pygame.display.set_caption("Йопики у ворот")
+screen = pygame.display.set_mode((700, 700))
+clock = pygame.time.Clock()
+monsters_num = player_x = player_y = monster_x = monster_y = monster_speed = nx = ny = lvl = 0
+pygame.mixer.music.load('data/music.mp3')
+pygame.mixer.music.set_volume(0.7)
+pygame.mixer.music.play()
+levels = {'first': [10, 6, 6, 0, 0, 1, 1, 0, 'lvl1.txt'],
+          'second': [15, 6, 1, 2, 0, 1.4, 0, -1, 'lvl2.txt'],
+          'third': [20, 5, 5, 0, 1, 2.0, 1, 0, 'lvl3.txt']}
+while True:
+    screen.fill((0, 0, 0))
+    start_lvl = start_screen()
+    monsters_num, player_x, player_y, monster_x, monster_y, monster_v, nx, ny, level_text = start_lvl
     n = 8
-    monsters_num = 10
+    counter = 0
     money = 20
     score = 0
     health = 4
@@ -300,25 +352,17 @@ if __name__ == '__main__':
     image_2 = pygame.transform.scale(load_image("2.png"), (64, 64))
     monsters = []
     towers = []
-    clock = pygame.time.Clock()
-    # Поменять скорость
-    monsters_v = 1
-    fps = 60
-    par_monsters = monsters_v * cell_width / fps
-    player = Player(6, 6)
-    pygame.mixer.music.load('data/music.mp3')
-    pygame.mixer.music.set_volume(0.7)
-    pygame.mixer.music.play()
-    lvl = load_level('lvl1.txt')
+    par_monsters = monster_v * cell_width / fps
+    player = Player(player_x, player_y)
+    lvl = load_level(level_text)
     hero_right = True
     running = True
     start = False
     pygame.display.flip()
-    print(board_moving.board)
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                running = False
+                terminate()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RIGHT:
                     if not hero_right:
@@ -344,12 +388,12 @@ if __name__ == '__main__':
                     if check_tower(player.coord[0], player.coord[1]) and money >= 10:
                         towers.append(Tower(player.coord[0], player.coord[1], 'flying'))
                         money -= 10
-        if monsters_num != 0 and check_monster(0, 0):
+        if monsters_num != 0 and check_monster(monster_x, monster_y):
             start = True
             monster_type = random.choice(['ground', 'flying'])
             a = [0] * int(1.5 * fps) + [1]
             if random.choice(a):
-                obj_monster = Monster(left_top, left_top, monster_type, par_monsters)
+                obj_monster = Monster(monster_x, monster_y, monster_type, par_monsters)
                 monsters.append(obj_monster)
                 monsters_num -= 1
         if start:
@@ -369,9 +413,8 @@ if __name__ == '__main__':
                 for tower in towers:
                     tower.damage_monsters_near()
                 counter = 0
-        if not len(monsters):
-            # Переход на след. уровень или конечный экран с выводом счета
-            pass
+        if not monsters_num and not len(monsters):
+            break
         screen.fill((0, 0, 0))
         board_background.render()
         board_state.render()
@@ -447,4 +490,3 @@ if __name__ == '__main__':
 
         pygame.display.flip()
         counter += 1
-    pygame.quit()
