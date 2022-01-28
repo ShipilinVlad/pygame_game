@@ -6,12 +6,13 @@ import random
 
 class Monster:
     def __init__(self, x, y, m_type, par):
+        print(x, y)
         if x == 0 or x == n - 1:
-            self.x = x * n
+            self.x = int(bool(x)) * n * cell_width
             self.y = cell_width // 2 + y * cell_width
         else:
             self.x = cell_width // 2 + x * cell_width
-            self.y = x * n
+            self.y = int(bool(y)) * n * cell_width
         self.board_state = board_state
         self.m_type, self.n = m_type, n
         self.width = cell_width
@@ -28,8 +29,9 @@ class Monster:
         self.monster = pygame.sprite.Sprite(moving_sprites)
         self.monster.image = monster_image
         self.monster.rect = self.monster.image.get_rect()
-        board_moving.board[0][0] = self.monster
+        board_moving.board[y][x] = self.monster
         self.lvl = lvl
+        print(self.x, self.y, self.coord, self.left, self.top, self.nx, self.ny)
 
     def move(self):
         if self.left + self.coord[0] * self.width <= self.x <= self.left + (self.coord[0] + 1) * self.width and \
@@ -136,8 +138,7 @@ class Board:
         self.board[y][x] = no_sprite
         self.board[y + move_y][x + move_x] = sprite
 
-    def fill(self, name):
-        text_lvl = load_level(name)
+    def fill(self, text_lvl):
         for i in range(n):
             for j in range(n):
                 if text_lvl[i][j] == '00' or text_lvl[i][j] == 'xx':
@@ -200,7 +201,6 @@ class Board:
                     elem.image = pygame.transform.scale(load_image("river1.png"), (self.cell_size, self.cell_size))
                 elif text_lvl[i][j] == "gr":
                     elem.image = pygame.transform.scale(load_image("grass.png"), (self.cell_size, self.cell_size))
-
                 elem.rect = elem.image.get_rect()
                 self.board[i][j] = elem
 
@@ -212,7 +212,7 @@ class Player:
         self.player.rect = self.player.image.get_rect()
         self.coord = [x, y]
         self.board_player = board_player
-        self.board_player.board[x][y] = self.player
+        self.board_player.board[y][x] = self.player
         self.n = n
 
     def update(self, dx, dy):
@@ -275,30 +275,45 @@ def terminate():
 
 
 def start_screen():
-    intro_text = ["ЗАСТАВКА", "",
-                  "Правила игры",
-                  "Если в правилах несколько строк,",
-                  "приходится выводить их построчно"]
-
-    fon = pygame.transform.scale(load_image('eye.png'), (64 * 8, 64 * 8))
-    screen.blit(fon, (0, 0))
-    font = pygame.font.Font(None, 30)
-    text_coord = 50
-    for line in intro_text:
-        string_rendered = font.render(line, True, pygame.Color('white'))
-        intro_rect = string_rendered.get_rect()
-        text_coord += 10
-        intro_rect.top = text_coord
-        intro_rect.x = 10
-        text_coord += intro_rect.height
-        screen.blit(string_rendered, intro_rect)
+    screen.fill((255, 255, 255))
+    start_end_group.empty()
+    start_sprite = pygame.sprite.Sprite(start_end_group)
+    start_sprite.image = load_image('start.png')
+    start_sprite.rect = start_sprite.image.get_rect()
+    start_sprite.rect.x, start_sprite.rect.y = 0, 0
     while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+        for event_start in pygame.event.get():
+            if event_start.type == pygame.QUIT:
                 terminate()
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_1:
+            elif event_start.type == pygame.KEYDOWN:
+                if event_start.key == pygame.K_1:
                     return levels['first']
+                elif event_start.key == pygame.K_2:
+                    return levels['second']
+                elif event_start.key == pygame.K_3:
+                    return levels['third']
+        start_end_group.draw(screen)
+        pygame.display.flip()
+        clock.tick(fps)
+
+
+def end_screen():
+    screen.fill((255, 255, 255))
+    start_end_group.empty()
+    end_sprite = pygame.sprite.Sprite(start_end_group)
+    if won:
+        end_sprite.image = load_image('win.png')
+    else:
+        end_sprite.image = load_image('lose.png')
+    end_sprite.rect = end_sprite.image.get_rect()
+    end_sprite.rect.x, end_sprite.rect.y = 0, 0
+    while True:
+        for event_end in pygame.event.get():
+            if event_end.type == pygame.QUIT:
+                terminate()
+            elif event_end.type == pygame.KEYDOWN or event_end.type == pygame.MOUSEBUTTONDOWN:
+                return
+        start_end_group.draw(screen)
         pygame.display.flip()
         clock.tick(fps)
 
@@ -306,19 +321,21 @@ def start_screen():
 fps = 60
 pygame.init()
 pygame.display.set_caption("Йопики у ворот")
-screen = pygame.display.set_mode((700, 700))
+screen = pygame.display.set_mode((704, 576))
 clock = pygame.time.Clock()
-monsters_num = player_x = player_y = monster_x = monster_y = monster_speed = nx = ny = lvl = 0
+monsters_num = player_x = player_y = monster_x = monster_y = monster_speed = nx = ny = spawn_par = lvl = 0
+won = False
 pygame.mixer.music.load('data/music.mp3')
 pygame.mixer.music.set_volume(0.7)
 pygame.mixer.music.play()
-levels = {'first': [10, 6, 6, 0, 0, 1, 1, 0, 'lvl1.txt'],
-          'second': [15, 6, 1, 2, 0, 1.4, 0, -1, 'lvl2.txt'],
-          'third': [20, 5, 5, 0, 1, 2.0, 1, 0, 'lvl3.txt']}
+levels = {'first': [10, 6, 6, 0, 0, 1, 1, 0, 1.5, 'lvl1.txt'],
+          'second': [15, 6, 1, 2, 7, 1.7, 0, -1, 1.2, 'lvl2.txt'],
+          'third': [20, 5, 5, 7, 3, 2.2, -1, 0, 1, 'lvl3.txt']}
+start_end_group = pygame.sprite.Group()
 while True:
-    screen.fill((0, 0, 0))
+    won = False
     start_lvl = start_screen()
-    monsters_num, player_x, player_y, monster_x, monster_y, monster_v, nx, ny, level_text = start_lvl
+    monsters_num, player_x, player_y, monster_x, monster_y, monster_v, nx, ny, spawn_par, level_text = start_lvl
     n = 8
     counter = 0
     money = 20
@@ -340,13 +357,13 @@ while True:
     moving_sprites = pygame.sprite.Group()
     state_sprites = pygame.sprite.Group()
     hero_sprite = pygame.sprite.Group()
-    board_background.fill('lvl_back.txt')
-    board_state.fill('lvl1.txt')
+    board_background.fill(load_level('lvl_back.txt'))
+    lvl = load_level(level_text)
+    board_state.fill(lvl)
     monsters = []
     towers = []
     par_monsters = monster_v * cell_width / fps
     player = Player(player_x, player_y)
-    lvl = load_level(level_text)
     hero_right = True
     running = True
     start = False
@@ -383,7 +400,7 @@ while True:
         if monsters_num != 0 and check_monster(monster_x, monster_y):
             start = True
             monster_type = random.choice(['ground', 'flying'])
-            a = [0] * int(1.5 * fps) + [1]
+            a = [0] * int(spawn_par * fps) + [1]
             if random.choice(a):
                 obj_monster = Monster(monster_x, monster_y, monster_type, par_monsters)
                 monsters.append(obj_monster)
@@ -392,6 +409,7 @@ while True:
             for monster in monsters:
                 monster.move()
                 if check_monster_kill(monster.coord[0], monster.coord[1]) or monster.hp <= 0:
+                    health -= int(check_monster_kill(monster.coord[0], monster.coord[1]))
                     if monster.m_type == 'ground' and monster.hp <= 0:
                         pygame.mixer.Sound('data/skell.wav').play()
                     elif monster.m_type == 'flying' and monster.hp <= 0:
@@ -403,9 +421,13 @@ while True:
                 for tower in towers:
                     tower.damage_monsters_near()
                 counter = 0
-        if not monsters_num and not len(monsters):
+        if health <= 0:
+            won = False
             break
-        screen.fill((0, 0, 0))
+        if not monsters_num and not len(monsters):
+            won = True
+            break
+        screen.fill((45, 160, 95))
         board_background.render()
         board_state.render()
         board_moving.render()
@@ -417,3 +439,4 @@ while True:
         hero_sprite.draw(screen)
         pygame.display.flip()
         counter += 1
+    end_screen()
