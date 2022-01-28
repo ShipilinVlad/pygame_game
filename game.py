@@ -418,14 +418,14 @@ current_music = ['normal']
 levels = {'first': [1, 10, 20, 4, 6, 6, 0, 0, 1, 1, 0, 1.5, 'lvl1.txt', 'lvl_back.txt'],
           'second': [1.5, 15, 30, 4, 6, 1, 2, 7, 1.7, 0, -1, 1.2, 'lvl2.txt', 'lvl_back.txt'],
           'third': [2, 20, 40, 4, 5, 5, 7, 3, 2.2, -1, 0, 1, 'lvl3.txt', 'lvl_back.txt'],
-          'fourth': [5, 50, 60, 6, 5, 5, 0, 0, 2.5, 1, 0, 1, 'lvl4.txt', 'lvl_scary_back.txt']}
+          'fourth': [5, 50, 50, 6, 5, 5, 0, 0, 5, 1, 0, 1, 'lvl4.txt', 'lvl_scary_back.txt']}
 start_end_group = pygame.sprite.Group()
 while True:
     won = False
     start_lvl = start_screen()
     screen = pygame.display.set_mode((704, 576))
     kf, monsters_num, money, health, player_x, player_y, monster_x, monster_y, monster_v, nx, ny, spawn_par,\
-    level_text, level_back_text = start_lvl
+        level_text, level_back_text = start_lvl
     n = 8
     counter = 0
     end_counter = 0
