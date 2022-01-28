@@ -121,7 +121,7 @@ class Board:
         self.top = top
         self.cell_size = cell_size
 
-    def render(self):
+    def render(self, sprites_group, screen_to_draw):
         for i in range(n):
             for j in range(n):
                 cell = self.board[i][j]
@@ -131,6 +131,7 @@ class Board:
                         cell.rect.x, cell.rect.y = coord[0], coord[1]
                 except AttributeError:
                     pass
+        sprites_group.draw(screen_to_draw)
 
     def move(self, x, y, move_x, move_y, sprite):
         self.board[y][x] = no_sprite
@@ -342,6 +343,7 @@ while True:
     health = 4
     cell_width = 64
     left_top = 0
+
     no_sprite = pygame.sprite.Sprite()
     no_sprite.image = load_image('no_image.png')
     board_moving = Board()
@@ -356,15 +358,18 @@ while True:
     moving_sprites = pygame.sprite.Group()
     state_sprites = pygame.sprite.Group()
     hero_sprite = pygame.sprite.Group()
+
     board_background.fill(load_level('lvl_back.txt'))
     lvl = load_level(level_text)
     board_state.fill(lvl)
+
     hp_image = load_image("hp.png")
     money_image = load_image("coin.png")
     score_image = pygame.transform.scale(load_image("no_image.png", -1), (64, 64))  # Поменять
     buttons_image = pygame.transform.scale(load_image("buttons.png"), (cell_width * 3, cell_width * 2))
     image_1 = pygame.transform.scale(load_image("1.png"), (64, 64))
     image_2 = pygame.transform.scale(load_image("2.png"), (64, 64))
+
     monsters = []
     towers = []
     par_monsters = monster_v * cell_width / fps
@@ -372,6 +377,74 @@ while True:
     hero_right = True
     running = True
     start = False
+    screen.fill((45, 160, 95))
+    hp_surface = pygame.Surface((n * cell_width // 3, cell_width))
+    hp_surface.fill((45, 160, 95))
+    hp_surface.blit(hp_image, (0, 0))
+    hp_font = pygame.font.Font(None, 64)
+    hp_text = hp_font.render(f"{health}", True, pygame.color.Color('red'))
+    hp_text_x = 64
+    hp_text_y = cell_width // 2 - hp_text.get_height() // 2
+    hp_surface.blit(hp_text, (hp_text_x, hp_text_y))
+    screen.blit(hp_surface, (0, n * cell_width))
+
+    money_surface = pygame.Surface((n * cell_width // 3, cell_width))
+    money_surface.fill((45, 160, 95))
+    money_surface.blit(money_image, (0, 0))
+    money_font = pygame.font.Font(None, 64)
+    money_text = money_font.render(f"{money}", True, pygame.color.Color('yellow'))
+    money_text_x = 64
+    money_text_y = cell_width // 2 - money_text.get_height() // 2
+    money_surface.blit(money_text, (money_text_x, money_text_y))
+    screen.blit(money_surface, (n * cell_width // 3, n * cell_width))
+
+    score_surface = pygame.Surface((n * cell_width // 3, cell_width))
+    score_surface.fill((45, 160, 95))
+    score_surface.blit(score_image, (0, 0))
+    score_font = pygame.font.Font(None, 64)
+    score_text = score_font.render(f"{score}", True, pygame.color.Color('green'))
+    score_text_x = 64
+    score_text_y = cell_width // 2 - score_text.get_height() // 2
+    score_surface.blit(score_text, (score_text_x, score_text_y))
+    screen.blit(score_surface, (n * cell_width // 3 * 2, n * cell_width))
+
+    navigation_surface = pygame.Surface((cell_width * 3, cell_width * 2.5))
+    navigation_surface.fill((45, 160, 95))
+    navigation_surface.blit(buttons_image, (0, cell_width * 0.5))
+    navigation_font = pygame.font.Font(None, 45)
+    navigation_text = navigation_font.render("Управление", True, pygame.color.Color('white'))
+    navigation_text_x = 0
+    navigation_text_y = 0
+    navigation_surface.blit(navigation_text, (navigation_text_x, navigation_text_y))
+    screen.blit(navigation_surface, (n * cell_width, 0))
+
+    surface_1 = pygame.Surface((cell_width * 3, cell_width * 2))
+    surface_1.fill((45, 160, 95))
+    surface_1.blit(image_1, (0, cell_width * 1))
+    surface_1_font = pygame.font.Font(None, 64)
+    surface_1_text = surface_1_font.render("Маг", True, pygame.color.Color('white'))
+    surface_1_text_x = 0
+    surface_1_text_y = 0
+    surface_1.blit(surface_1_text, (surface_1_text_x, surface_1_text_y))
+    surface_1_text_2 = surface_1_font.render("(земля)", True, pygame.color.Color('white'))
+    surface_1_text_2_x = 0
+    surface_1_text_2_y = cell_width * 0.5
+    surface_1.blit(surface_1_text_2, (surface_1_text_2_x, surface_1_text_2_y))
+    screen.blit(surface_1, (n * cell_width, cell_width * 2.5))
+
+    surface_2 = pygame.Surface((cell_width * 3, cell_width * 2))
+    surface_2.fill((45, 160, 95))
+    surface_2.blit(image_2, (0, cell_width * 1))
+    surface_2_font = pygame.font.Font(None, 64)
+    surface_2_text = surface_2_font.render("Лучник", True, pygame.color.Color('white'))
+    surface_2_text_x = 0
+    surface_2_text_y = 0
+    surface_2.blit(surface_2_text, (surface_2_text_x, surface_2_text_y))
+    surface_2_text_2 = surface_2_font.render("(воздух)", True, pygame.color.Color('white'))
+    surface_2_text_2_x = 0
+    surface_2_text_2_y = cell_width * 0.5
+    surface_2.blit(surface_2_text_2, (surface_2_text_2_x, surface_2_text_2_y))
+    screen.blit(surface_2, (n * cell_width, cell_width * 4.5))
     pygame.display.flip()
     while running:
         for event in pygame.event.get():
@@ -405,8 +478,8 @@ while True:
         if monsters_num != 0 and check_monster(monster_x, monster_y):
             start = True
             monster_type = random.choice(['ground', 'flying'])
-            a = [0] * int(spawn_par * fps) + [1]
-            if random.choice(a):
+            spawn_chance = [0] * int(spawn_par * fps) + [1]
+            if random.choice(spawn_chance):
                 obj_monster = Monster(monster_x, monster_y, monster_type, par_monsters)
                 monsters.append(obj_monster)
                 monsters_num -= 1
@@ -422,7 +495,7 @@ while True:
                     monster.monster.kill()
                     monsters.remove(monster)
                     money += 5
-            if counter >= 60:
+            if counter >= fps:
                 for tower in towers:
                     tower.damage_monsters_near()
                 counter = 0
@@ -431,85 +504,14 @@ while True:
             break
         if not monsters_num and not len(monsters):
             end_counter += 1
-        screen.fill((45, 160, 95))
-        board_background.render()
-        board_state.render()
-        board_moving.render()
-        board_player.render()
+        #screen.fill((45, 160, 95))
+        board_background.render(back_sprites, screen)
+        board_state.render(state_sprites, screen)
+        board_moving.render(moving_sprites, screen)
+        board_player.render(hero_sprite, screen)
+
+
         clock.tick(fps)
-        back_sprites.draw(screen)
-        state_sprites.draw(screen)
-        moving_sprites.draw(screen)
-        hero_sprite.draw(screen)
-
-        hp_surface = pygame.Surface((n * cell_width // 3, cell_width))
-        hp_surface.fill((45, 160, 95))
-        hp_surface.blit(hp_image, (0, 0))
-        hp_font = pygame.font.Font(None, 64)
-        hp_text = hp_font.render(f"{health}", True, pygame.color.Color('red'))
-        hp_text_x = 64
-        hp_text_y = cell_width // 2 - hp_text.get_height() // 2
-        hp_surface.blit(hp_text, (hp_text_x, hp_text_y))
-        screen.blit(hp_surface, (0, n * cell_width))
-
-        money_surface = pygame.Surface((n * cell_width // 3, cell_width))
-        money_surface.fill((45, 160, 95))
-        money_surface.blit(money_image, (0, 0))
-        money_font = pygame.font.Font(None, 64)
-        money_text = money_font.render(f"{money}", True, pygame.color.Color('yellow'))
-        money_text_x = 64
-        money_text_y = cell_width // 2 - money_text.get_height() // 2
-        money_surface.blit(money_text, (money_text_x, money_text_y))
-        screen.blit(money_surface, (n * cell_width // 3, n * cell_width))
-
-        score_surface = pygame.Surface((n * cell_width // 3, cell_width))
-        score_surface.fill((45, 160, 95))
-        score_surface.blit(score_image, (0, 0))
-        score_font = pygame.font.Font(None, 64)
-        score_text = score_font.render(f"{score}", True, pygame.color.Color('green'))
-        score_text_x = 64
-        score_text_y = cell_width // 2 - score_text.get_height() // 2
-        score_surface.blit(score_text, (score_text_x, score_text_y))
-        screen.blit(score_surface, (n * cell_width // 3 * 2, n * cell_width))
-
-        navigation_surface = pygame.Surface((cell_width * 3, cell_width * 2.5))
-        navigation_surface.fill((45, 160, 95))
-        navigation_surface.blit(buttons_image, (0, cell_width * 0.5))
-        navigation_font = pygame.font.Font(None, 45)
-        navigation_text = navigation_font.render("Управление", True, pygame.color.Color('white'))
-        navigation_text_x = 0
-        navigation_text_y = 0
-        navigation_surface.blit(navigation_text, (navigation_text_x, navigation_text_y))
-        screen.blit(navigation_surface, (n * cell_width, 0))
-
-        surface_1 = pygame.Surface((cell_width * 3, cell_width * 2))
-        surface_1.fill((45, 160, 95))
-        surface_1.blit(image_1, (0, cell_width * 1))
-        surface_1_font = pygame.font.Font(None, 64)
-        surface_1_text = surface_1_font.render("Маг", True, pygame.color.Color('white'))
-        surface_1_text_x = 0
-        surface_1_text_y = 0
-        surface_1.blit(surface_1_text, (surface_1_text_x, surface_1_text_y))
-        surface_1_text_2 = surface_1_font.render("(земля)", True, pygame.color.Color('white'))
-        surface_1_text_2_x = 0
-        surface_1_text_2_y = cell_width * 0.5
-        surface_1.blit(surface_1_text_2, (surface_1_text_2_x, surface_1_text_2_y))
-        screen.blit(surface_1, (n * cell_width, cell_width * 2.5))
-
-        surface_2 = pygame.Surface((cell_width * 3, cell_width * 2))
-        surface_2.fill((45, 160, 95))
-        surface_2.blit(image_2, (0, cell_width * 1))
-        surface_2_font = pygame.font.Font(None, 64)
-        surface_2_text = surface_2_font.render("Лучник", True, pygame.color.Color('white'))
-        surface_2_text_x = 0
-        surface_2_text_y = 0
-        surface_2.blit(surface_2_text, (surface_2_text_x, surface_2_text_y))
-        surface_2_text_2 = surface_2_font.render("(воздух)", True, pygame.color.Color('white'))
-        surface_2_text_2_x = 0
-        surface_2_text_2_y = cell_width * 0.5
-        surface_2.blit(surface_2_text_2, (surface_2_text_2_x, surface_2_text_2_y))
-        screen.blit(surface_2, (n * cell_width, cell_width * 4.5))
-
         pygame.display.flip()
         counter += 1
         if end_counter >= 120:
