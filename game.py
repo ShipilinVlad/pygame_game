@@ -102,7 +102,7 @@ class Tower:
                         if monster_to_kill.coord == [j + self.x, i + self.y]:
                             if monster_to_kill.m_type == self.t_type:
                                 monster_to_kill.hp -= 1
-                                score[0] += 5
+                                score[0] += int(5 * kf)
                                 if self.t_type == 'flying':
                                     sound = pygame.mixer.Sound('data/arrow.wav')
                                     sound.set_volume(0.4)
@@ -316,18 +316,42 @@ def start_screen():
                 terminate()
             elif event_start.type == pygame.KEYDOWN:
                 if event_start.key == pygame.K_1:
+                    if current_music[0] != 'normal':
+                        pygame.mixer.music.stop()
+                        pygame.mixer.music.load('data/music.mp3')
+                        pygame.mixer.music.set_volume(0.7)
+                        pygame.mixer.music.play(-1)
+                        current_music[0] = 'normal'
                     return levels['first']
                 elif event_start.key == pygame.K_2:
+                    if current_music[0] != 'normal':
+                        pygame.mixer.music.stop()
+                        pygame.mixer.music.load('data/music.mp3')
+                        pygame.mixer.music.set_volume(0.7)
+                        pygame.mixer.music.play(-1)
+                        current_music[0] = 'normal'
                     return levels['second']
                 elif event_start.key == pygame.K_3:
+                    if current_music[0] != 'normal':
+                        pygame.mixer.music.stop()
+                        pygame.mixer.music.load('data/music.mp3')
+                        pygame.mixer.music.set_volume(0.7)
+                        pygame.mixer.music.play(-1)
+                        current_music[0] = 'normal'
                     return levels['third']
                 elif event_start.key == pygame.K_4:
+                    if current_music[0] == 'normal':
+                        pygame.mixer.music.stop()
+                        pygame.mixer.music.load('data/secret_music.mp3')
+                        pygame.mixer.music.set_volume(0.7)
+                        pygame.mixer.music.play(-1)
+                        current_music[0] = 'secret'
                     return levels['fourth']
                 elif event_start.key == pygame.K_ESCAPE:
                     thx_for_game_surface = pygame.Surface((700, 700))
                     thx_for_game_surface.fill((255, 255, 255))
                     thx_for_game_font = pygame.font.Font(None, 64)
-                    thx_for_game_text = thx_for_game_font.render(f"Спасибо за игру!", True, pygame.color.Color('red'))
+                    thx_for_game_text = thx_for_game_font.render(f"Спасибо за игру!", True, pygame.color.Color('black'))
                     thx_for_game_text_x = 160
                     thx_for_game_text_y = 250
                     thx_for_game_surface.blit(thx_for_game_text, (thx_for_game_text_x, thx_for_game_text_y))
@@ -384,26 +408,27 @@ pygame.init()
 pygame.display.set_caption("Йопики у ворот")
 screen = pygame.display.set_mode((704, 700))
 clock = pygame.time.Clock()
-monsters_num = start_money = player_x = player_y = monster_x = monster_y = monster_speed = nx = ny = spawn_par = lvl = 0
+kf = monsters_num = start_money = health = player_x = player_y = monster_x = monster_y = monster_speed = nx = ny =\
+    spawn_par = lvl = lvl_back = 0
 won = False
 pygame.mixer.music.load('data/music.mp3')
 pygame.mixer.music.set_volume(0.7)
 pygame.mixer.music.play(-1)
-levels = {'first': [10, 20, 6, 6, 0, 0, 1, 1, 0, 1.5, 'lvl1.txt', 'lvl_back.txt'],
-          'second': [15, 30, 6, 1, 2, 7, 1.7, 0, -1, 1.2, 'lvl2.txt', 'lvl_back.txt'],
-          'third': [20, 40, 5, 5, 7, 3, 2.2, -1, 0, 1, 'lvl3.txt', 'lvl_back.txt'],
-          'fourth': [20, 60, 7, 7, 0, 0, 2.5, 1, 0, 0.8, 'lvl4.txt', 'lvl_scary_back.txt']}
+current_music = ['normal']
+levels = {'first': [1, 10, 20, 4, 6, 6, 0, 0, 1, 1, 0, 1.5, 'lvl1.txt', 'lvl_back.txt'],
+          'second': [1.5, 15, 30, 4, 6, 1, 2, 7, 1.7, 0, -1, 1.2, 'lvl2.txt', 'lvl_back.txt'],
+          'third': [2, 20, 40, 4, 5, 5, 7, 3, 2.2, -1, 0, 1, 'lvl3.txt', 'lvl_back.txt'],
+          'fourth': [5, 50, 60, 6, 5, 5, 0, 0, 2.5, 1, 0, 1, 'lvl4.txt', 'lvl_scary_back.txt']}
 start_end_group = pygame.sprite.Group()
 while True:
     won = False
     start_lvl = start_screen()
     screen = pygame.display.set_mode((704, 576))
-    monsters_num, money, player_x, player_y, monster_x, monster_y, monster_v, nx, ny, spawn_par, level_text,\
-        back_lvl = start_lvl
+    kf, monsters_num, money, health, player_x, player_y, monster_x, monster_y, monster_v, nx, ny, spawn_par,\
+    level_text, level_back_text = start_lvl
     n = 8
     counter = 0
     end_counter = 0
-    health = 4
     cell_width = 64
     left_top = 0
 
@@ -422,7 +447,7 @@ while True:
     state_sprites = pygame.sprite.Group()
     hero_sprite = pygame.sprite.Group()
 
-    board_background.fill(load_level(back_lvl))
+    board_background.fill(load_level(level_back_text))
     lvl = load_level(level_text)
     board_state.fill(lvl)
 
@@ -441,6 +466,7 @@ while True:
     running = True
     start = False
     screen.fill((45, 160, 95))
+
     hp_surface = pygame.Surface((n * cell_width // 3, cell_width))
     hp_surface.fill((45, 160, 95))
     hp_surface.blit(hp_image, (0, 0))
@@ -508,6 +534,7 @@ while True:
     surface_2_text_2_y = cell_width * 0.5
     surface_2.blit(surface_2_text_2, (surface_2_text_2_x, surface_2_text_2_y))
     screen.blit(surface_2, (n * cell_width, cell_width * 4.5))
+
     pygame.display.flip()
     while running:
         for event in pygame.event.get():
@@ -560,7 +587,7 @@ while True:
                     monster.monster.kill()
                     monsters.remove(monster)
                     money += 5
-                    score[0] += 5  # коэф
+                    score[0] += int(5 * kf)  # коэф
             if counter >= fps:
                 for tower in towers:
                     tower.damage_monsters_near()
