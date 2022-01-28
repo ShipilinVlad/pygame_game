@@ -280,6 +280,20 @@ def start_screen():
     start_sprite.image = load_image('start.png')
     start_sprite.rect = start_sprite.image.get_rect()
     start_sprite.rect.x, start_sprite.rect.y = 0, 0
+    note_surface = pygame.Surface((700, 120))
+    note_surface.fill((255, 255, 255))
+    note_font = pygame.font.Font(None, 50)
+    note_text = note_font.render(f"Нажмите 1, 2 или 3 для выбора уровня", True, pygame.color.Color('black'))
+    note_text_x = 0
+    note_text_y = 0
+    note_surface.blit(note_text, (note_text_x, note_text_y))
+
+    note_text2 = note_font.render(f"Нажмите Esc для выхода", True, pygame.color.Color('black'))
+    note_text_x2 = 0
+    note_text_y2 = 50
+    note_surface.blit(note_text2, (note_text_x2, note_text_y2))
+
+    screen.blit(note_surface, (15, 590))
     while True:
         for event_start in pygame.event.get():
             if event_start.type == pygame.QUIT:
@@ -291,6 +305,18 @@ def start_screen():
                     return levels['second']
                 elif event_start.key == pygame.K_3:
                     return levels['third']
+                elif event_start.key == pygame.K_ESCAPE:
+                    thx_for_game_surface = pygame.Surface((700, 700))
+                    thx_for_game_surface.fill((255, 255, 255))
+                    thx_for_game_font = pygame.font.Font(None, 64)
+                    thx_for_game_text = thx_for_game_font.render(f"Спасибо за игру!", True, pygame.color.Color('red'))
+                    thx_for_game_text_x = 160
+                    thx_for_game_text_y = 300
+                    thx_for_game_surface.blit(thx_for_game_text, (thx_for_game_text_x, thx_for_game_text_y))
+                    screen.blit(thx_for_game_surface, (0, 0))
+                    pygame.display.flip()
+                    pygame.time.wait(3000)
+                    sys.exit()
         start_end_group.draw(screen)
         pygame.display.flip()
         clock.tick(fps)
@@ -302,8 +328,12 @@ def end_screen():
     end_sprite = pygame.sprite.Sprite(start_end_group)
     if won:
         end_sprite.image = load_image('win.png')
+        pygame.mixer.music.pause()
+        pygame.mixer.Sound("data/winSound.wav").play()
     else:
         end_sprite.image = load_image('lose.png')
+        pygame.mixer.music.pause()
+        pygame.mixer.Sound('data/loseSound.wav').play()
     end_sprite.rect = end_sprite.image.get_rect()
     end_sprite.rect.x, end_sprite.rect.y = 0, 0
     while True:
@@ -311,6 +341,7 @@ def end_screen():
             if event_end.type == pygame.QUIT:
                 terminate()
             elif event_end.type == pygame.KEYDOWN or event_end.type == pygame.MOUSEBUTTONDOWN:
+                pygame.mixer.music.play()
                 return
         start_end_group.draw(screen)
         pygame.display.flip()
@@ -320,25 +351,25 @@ def end_screen():
 fps = 60
 pygame.init()
 pygame.display.set_caption("Йопики у ворот")
-screen = pygame.display.set_mode((704, 576))
+screen = pygame.display.set_mode((704, 700))
 clock = pygame.time.Clock()
-monsters_num = player_x = player_y = monster_x = monster_y = monster_speed = nx = ny = spawn_par = lvl = 0
+monsters_num = start_money = player_x = player_y = monster_x = monster_y = monster_speed = nx = ny = spawn_par = lvl = 0
 won = False
 pygame.mixer.music.load('data/music.mp3')
 pygame.mixer.music.set_volume(0.7)
-pygame.mixer.music.play()
-levels = {'first': [10, 6, 6, 0, 0, 1, 1, 0, 1.5, 'lvl1.txt'],
-          'second': [15, 6, 1, 2, 7, 1.7, 0, -1, 1.2, 'lvl2.txt'],
-          'third': [20, 5, 5, 7, 3, 2.2, -1, 0, 1, 'lvl3.txt']}
+pygame.mixer.music.play(-1)
+levels = {'first': [10, 20, 6, 6, 0, 0, 1, 1, 0, 1.5, 'lvl1.txt'],
+          'second': [15, 30, 6, 1, 2, 7, 1.7, 0, -1, 1.2, 'lvl2.txt'],
+          'third': [20, 40, 5, 5, 7, 3, 2.2, -1, 0, 1, 'lvl3.txt']}
 start_end_group = pygame.sprite.Group()
 while True:
     won = False
     start_lvl = start_screen()
-    monsters_num, player_x, player_y, monster_x, monster_y, monster_v, nx, ny, spawn_par, level_text = start_lvl
+    screen = pygame.display.set_mode((704, 576))
+    monsters_num, money, player_x, player_y, monster_x, monster_y, monster_v, nx, ny, spawn_par, level_text = start_lvl
     n = 8
     counter = 0
     end_counter = 0
-    money = 20
     score = 0
     health = 4
     cell_width = 64
@@ -378,6 +409,7 @@ while True:
     running = True
     start = False
     screen.fill((45, 160, 95))
+
     hp_surface = pygame.Surface((n * cell_width // 3, cell_width))
     hp_surface.fill((45, 160, 95))
     hp_surface.blit(hp_image, (0, 0))
@@ -445,6 +477,7 @@ while True:
     surface_2_text_2_y = cell_width * 0.5
     surface_2.blit(surface_2_text_2, (surface_2_text_2_x, surface_2_text_2_y))
     screen.blit(surface_2, (n * cell_width, cell_width * 4.5))
+
     pygame.display.flip()
     while running:
         for event in pygame.event.get():
@@ -475,6 +508,8 @@ while True:
                     if check_tower(player.coord[0], player.coord[1]) and money >= 10:
                         towers.append(Tower(player.coord[0], player.coord[1], 'flying'))
                         money -= 10
+                if event.key == pygame.K_ESCAPE:
+                    running = False
         if monsters_num != 0 and check_monster(monster_x, monster_y):
             start = True
             monster_type = random.choice(['ground', 'flying'])
@@ -504,12 +539,35 @@ while True:
             break
         if not monsters_num and not len(monsters):
             end_counter += 1
-        #screen.fill((45, 160, 95))
+
         board_background.render(back_sprites, screen)
         board_state.render(state_sprites, screen)
         board_moving.render(moving_sprites, screen)
         board_player.render(hero_sprite, screen)
 
+        hp_surface.fill((45, 160, 95))
+        hp_surface.blit(hp_image, (0, 0))
+        hp_text = hp_font.render(f"{health}", True, pygame.color.Color('red'))
+        hp_text_x = 64
+        hp_text_y = cell_width // 2 - hp_text.get_height() // 2
+        hp_surface.blit(hp_text, (hp_text_x, hp_text_y))
+        screen.blit(hp_surface, (0, n * cell_width))
+
+        money_surface.fill((45, 160, 95))
+        money_surface.blit(money_image, (0, 0))
+        money_text = money_font.render(f"{money}", True, pygame.color.Color('yellow'))
+        money_text_x = 64
+        money_text_y = cell_width // 2 - money_text.get_height() // 2
+        money_surface.blit(money_text, (money_text_x, money_text_y))
+        screen.blit(money_surface, (n * cell_width // 3, n * cell_width))
+
+        score_surface.fill((45, 160, 95))
+        score_surface.blit(score_image, (0, 0))
+        score_text = score_font.render(f"{score}", True, pygame.color.Color('green'))
+        score_text_x = 64
+        score_text_y = cell_width // 2 - score_text.get_height() // 2
+        score_surface.blit(score_text, (score_text_x, score_text_y))
+        screen.blit(score_surface, (n * cell_width // 3 * 2, n * cell_width))
 
         clock.tick(fps)
         pygame.display.flip()
