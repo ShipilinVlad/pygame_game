@@ -98,6 +98,7 @@ class Tower:
                         if monster_to_kill.coord == [j + self.x, i + self.y]:
                             if monster_to_kill.m_type == self.t_type:
                                 monster_to_kill.hp -= 1
+                                score[0] += 5
                                 if self.t_type == 'flying':
                                     sound = pygame.mixer.Sound('data/arrow.wav')
                                     sound.set_volume(0.4)
@@ -311,7 +312,7 @@ def start_screen():
                     thx_for_game_font = pygame.font.Font(None, 64)
                     thx_for_game_text = thx_for_game_font.render(f"Спасибо за игру!", True, pygame.color.Color('red'))
                     thx_for_game_text_x = 160
-                    thx_for_game_text_y = 300
+                    thx_for_game_text_y = 250
                     thx_for_game_surface.blit(thx_for_game_text, (thx_for_game_text_x, thx_for_game_text_y))
                     screen.blit(thx_for_game_surface, (0, 0))
                     pygame.display.flip()
@@ -341,14 +342,26 @@ def end_screen():
             if event_end.type == pygame.QUIT:
                 terminate()
             elif event_end.type == pygame.KEYDOWN or event_end.type == pygame.MOUSEBUTTONDOWN:
-                pygame.mixer.music.play()
+                pygame.mixer.music.unpause()
+                if not won:
+                    score[0] = 0
                 return
         start_end_group.draw(screen)
+        if not won:
+            final_score_surface = pygame.Surface((700, 128))
+            final_score_surface.fill((255, 255, 255))
+            final_score_font = pygame.font.Font(None, 64)
+            final_score_text = final_score_font.render(f"Вы набрали {score[0]} очков", True, pygame.color.Color('black'))
+            final_score_text_x = 15
+            final_score_text_y = 0
+            final_score_surface.blit(final_score_text, (final_score_text_x, final_score_text_y))
+            screen.blit(final_score_surface, (0, 500))
         pygame.display.flip()
         clock.tick(fps)
 
 
 fps = 60
+score = [0]
 pygame.init()
 pygame.display.set_caption("Йопики у ворот")
 screen = pygame.display.set_mode((704, 700))
@@ -370,7 +383,6 @@ while True:
     n = 8
     counter = 0
     end_counter = 0
-    score = 0
     health = 4
     cell_width = 64
     left_top = 0
@@ -530,6 +542,7 @@ while True:
                     monster.monster.kill()
                     monsters.remove(monster)
                     money += 5
+                    score[0] += 5  # коэф
             if counter >= fps:
                 for tower in towers:
                     tower.damage_monsters_near()
@@ -563,7 +576,7 @@ while True:
 
         score_surface.fill((45, 160, 95))
         score_surface.blit(score_image, (0, 0))
-        score_text = score_font.render(f"{score}", True, pygame.color.Color('green'))
+        score_text = score_font.render(f"{score[0]}", True, pygame.color.Color('green'))
         score_text_x = 64
         score_text_y = cell_width // 2 - score_text.get_height() // 2
         score_surface.blit(score_text, (score_text_x, score_text_y))
