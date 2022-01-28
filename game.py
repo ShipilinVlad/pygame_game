@@ -275,17 +275,17 @@ def terminate():
 
 
 def start_screen():
-    intro_text = ["ЗАСТАВКА", "",
+    intro_text = ['Нажмите "1", "2" или "3" чтобы выбрать уровень', "",
                   "Правила игры",
                   "Если в правилах несколько строк,",
                   "приходится выводить их построчно"]
 
-    fon = pygame.transform.scale(load_image('eye.png'), (64 * 8, 64 * 8))
+    fon = pygame.transform.scale(load_image('start_screen.png'), (700, 700))
     screen.blit(fon, (0, 0))
-    font = pygame.font.Font(None, 30)
-    text_coord = 50
+    font = pygame.font.Font(None, 42)
+    text_coord = 660
     for line in intro_text:
-        string_rendered = font.render(line, True, pygame.Color('white'))
+        string_rendered = font.render(line, True, pygame.Color('black'))
         intro_rect = string_rendered.get_rect()
         text_coord += 10
         intro_rect.top = text_coord
@@ -308,7 +308,7 @@ pygame.init()
 pygame.display.set_caption("Йопики у ворот")
 screen = pygame.display.set_mode((700, 700))
 clock = pygame.time.Clock()
-monsters_num = player_x = player_y = monster_x = monster_y = monster_speed = nx = ny = lvl = 0
+monsters_num = player_x = player_y = monster_x = monster_y = monster_v = nx = ny = level_text = 0
 pygame.mixer.music.load('data/music.mp3')
 pygame.mixer.music.set_volume(0.7)
 pygame.mixer.music.play()
@@ -316,11 +316,14 @@ levels = {'first': [10, 6, 6, 0, 0, 1, 1, 0, 'lvl1.txt'],
           'second': [15, 6, 1, 2, 0, 1.4, 0, -1, 'lvl2.txt'],
           'third': [20, 5, 5, 0, 1, 2.0, 1, 0, 'lvl3.txt']}
 while True:
-    screen.fill((0, 0, 0))
+    screen = pygame.display.set_mode((700, 700))
+    screen.fill((255, 255, 255))
     start_lvl = start_screen()
     monsters_num, player_x, player_y, monster_x, monster_y, monster_v, nx, ny, level_text = start_lvl
+    print(start_lvl)
     n = 8
     counter = 0
+    end_counter = 0
     money = 20
     score = 0
     health = 4
@@ -414,8 +417,8 @@ while True:
                     tower.damage_monsters_near()
                 counter = 0
         if not monsters_num and not len(monsters):
-            break
-        screen.fill((0, 0, 0))
+            end_counter += 1
+        screen.fill((45, 160, 95))
         board_background.render()
         board_state.render()
         board_moving.render()
@@ -427,6 +430,7 @@ while True:
         hero_sprite.draw(screen)
 
         hp_surface = pygame.Surface((n * cell_width // 3, cell_width))
+        hp_surface.fill((45, 160, 95))
         hp_surface.blit(hp_image, (0, 0))
         hp_font = pygame.font.Font(None, 64)
         hp_text = hp_font.render(f"{health}", True, pygame.color.Color('red'))
@@ -436,6 +440,7 @@ while True:
         screen.blit(hp_surface, (0, n * cell_width))
 
         money_surface = pygame.Surface((n * cell_width // 3, cell_width))
+        money_surface.fill((45, 160, 95))
         money_surface.blit(money_image, (0, 0))
         money_font = pygame.font.Font(None, 64)
         money_text = money_font.render(f"{money}", True, pygame.color.Color('yellow'))
@@ -445,6 +450,7 @@ while True:
         screen.blit(money_surface, (n * cell_width // 3, n * cell_width))
 
         score_surface = pygame.Surface((n * cell_width // 3, cell_width))
+        score_surface.fill((45, 160, 95))
         score_surface.blit(score_image, (0, 0))
         score_font = pygame.font.Font(None, 64)
         score_text = score_font.render(f"{score}", True, pygame.color.Color('green'))
@@ -454,6 +460,7 @@ while True:
         screen.blit(score_surface, (n * cell_width // 3 * 2, n * cell_width))
 
         navigation_surface = pygame.Surface((cell_width * 3, cell_width * 2.5))
+        navigation_surface.fill((45, 160, 95))
         navigation_surface.blit(buttons_image, (0, cell_width * 0.5))
         navigation_font = pygame.font.Font(None, 45)
         navigation_text = navigation_font.render("Управление", True, pygame.color.Color('white'))
@@ -463,6 +470,7 @@ while True:
         screen.blit(navigation_surface, (n * cell_width, 0))
 
         surface_1 = pygame.Surface((cell_width * 3, cell_width * 2))
+        surface_1.fill((45, 160, 95))
         surface_1.blit(image_1, (0, cell_width * 1))
         surface_1_font = pygame.font.Font(None, 64)
         surface_1_text = surface_1_font.render("Маг", True, pygame.color.Color('white'))
@@ -476,6 +484,7 @@ while True:
         screen.blit(surface_1, (n * cell_width, cell_width * 2.5))
 
         surface_2 = pygame.Surface((cell_width * 3, cell_width * 2))
+        surface_2.fill((45, 160, 95))
         surface_2.blit(image_2, (0, cell_width * 1))
         surface_2_font = pygame.font.Font(None, 64)
         surface_2_text = surface_2_font.render("Лучник", True, pygame.color.Color('white'))
@@ -490,3 +499,5 @@ while True:
 
         pygame.display.flip()
         counter += 1
+        if end_counter >= 120:
+            break
