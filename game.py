@@ -20,6 +20,7 @@ class Monster:
         self.left, self.top = 0, 0
         self.nx, self.ny = nx, ny
         self.rotate = False
+        self.watch_right = True
         self.hp = random.choice([3, 4])
         if self.m_type == 'flying':
             monster_image = load_image("eye.png")
@@ -32,6 +33,9 @@ class Monster:
         self.lvl = lvl
 
     def move(self):
+        if nx == -1 and self.watch_right or nx == 1 and not self.watch_right:
+            self.monster.image = pygame.transform.flip(self.monster.image, True, False)
+            self.watch_right = bool(nx + 1)
         if self.left + self.coord[0] * self.width <= self.x <= self.left + (self.coord[0] + 1) * self.width and \
                 self.top + self.coord[1] * self.width <= self.y <= self.top + (self.coord[1] + 1) * self.width:
             self.x += self.par_x * self.nx
@@ -408,7 +412,7 @@ while True:
 
     hp_image = load_image("hp.png")
     money_image = load_image("coin.png")
-    score_image = pygame.transform.scale(load_image("no_image.png", -1), (64, 64))  # Поменять
+    score_image = pygame.transform.scale(load_image("xp.png", -1), (64, 64))  # Поменять
     buttons_image = pygame.transform.scale(load_image("buttons.png"), (cell_width * 3, cell_width * 2))
     image_1 = pygame.transform.scale(load_image("1.png"), (64, 64))
     image_2 = pygame.transform.scale(load_image("2.png"), (64, 64))
@@ -421,7 +425,6 @@ while True:
     running = True
     start = False
     screen.fill((45, 160, 95))
-
     hp_surface = pygame.Surface((n * cell_width // 3, cell_width))
     hp_surface.fill((45, 160, 95))
     hp_surface.blit(hp_image, (0, 0))
@@ -489,7 +492,6 @@ while True:
     surface_2_text_2_y = cell_width * 0.5
     surface_2.blit(surface_2_text_2, (surface_2_text_2_x, surface_2_text_2_y))
     screen.blit(surface_2, (n * cell_width, cell_width * 4.5))
-
     pygame.display.flip()
     while running:
         for event in pygame.event.get():
