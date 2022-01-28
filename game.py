@@ -98,7 +98,7 @@ class Tower:
                         if monster_to_kill.coord == [j + self.x, i + self.y]:
                             if monster_to_kill.m_type == self.t_type:
                                 monster_to_kill.hp -= 1
-                                score[0] += 5
+                                score[0] += int(5 * kf)
                                 if self.t_type == 'flying':
                                     sound = pygame.mixer.Sound('data/arrow.wav')
                                     sound.set_volume(0.4)
@@ -249,8 +249,10 @@ def load_level(filename):
 
 
 def check_monster(x, y):
+    print(board_moving.board[x][y])
     if (pygame.image.tostring(board_moving.board[y][x].image, "RGB") ==
             pygame.image.tostring(board_moving.board[n - 1][n - 1].image, "RGB")):
+        print(1)
         return True
     return False
 
@@ -301,16 +303,42 @@ def start_screen():
                 terminate()
             elif event_start.type == pygame.KEYDOWN:
                 if event_start.key == pygame.K_1:
+                    if current_music[0] != 'normal':
+                        pygame.mixer.music.stop()
+                        pygame.mixer.music.load('data/music.mp3')
+                        pygame.mixer.music.set_volume(0.7)
+                        pygame.mixer.music.play(-1)
+                        current_music[0] = 'normal'
                     return levels['first']
                 elif event_start.key == pygame.K_2:
+                    if current_music[0] != 'normal':
+                        pygame.mixer.music.stop()
+                        pygame.mixer.music.load('data/music.mp3')
+                        pygame.mixer.music.set_volume(0.7)
+                        pygame.mixer.music.play(-1)
+                        current_music[0] = 'normal'
                     return levels['second']
                 elif event_start.key == pygame.K_3:
+                    if current_music[0] != 'normal':
+                        pygame.mixer.music.stop()
+                        pygame.mixer.music.load('data/music.mp3')
+                        pygame.mixer.music.set_volume(0.7)
+                        pygame.mixer.music.play(-1)
+                        current_music[0] = 'normal'
                     return levels['third']
+                elif event_start.key == pygame.K_0:
+                    if current_music[0] == 'normal':
+                        pygame.mixer.music.stop()
+                        pygame.mixer.music.load('data/secret_music.mp3')
+                        pygame.mixer.music.set_volume(0.7)
+                        pygame.mixer.music.play(-1)
+                        current_music[0] = 'secret'
+                    return levels['fourth']
                 elif event_start.key == pygame.K_ESCAPE:
                     thx_for_game_surface = pygame.Surface((700, 700))
                     thx_for_game_surface.fill((255, 255, 255))
                     thx_for_game_font = pygame.font.Font(None, 64)
-                    thx_for_game_text = thx_for_game_font.render(f"Спасибо за игру!", True, pygame.color.Color('red'))
+                    thx_for_game_text = thx_for_game_font.render(f"Спасибо за игру!", True, pygame.color.Color('black'))
                     thx_for_game_text_x = 160
                     thx_for_game_text_y = 250
                     thx_for_game_surface.blit(thx_for_game_text, (thx_for_game_text_x, thx_for_game_text_y))
@@ -341,7 +369,13 @@ def end_screen():
         for event_end in pygame.event.get():
             if event_end.type == pygame.QUIT:
                 terminate()
-            elif event_end.type == pygame.KEYDOWN or event_end.type == pygame.MOUSEBUTTONDOWN:
+            elif event_end.type == pygame.KEYDOWN:
+                if event_end.key not in [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT, pygame.K_1, pygame.K_2]:
+                    pygame.mixer.music.unpause()
+                    if not won:
+                        score[0] = 0
+                    return
+            elif event_end.type == event_end.type == pygame.MOUSEBUTTONDOWN:
                 pygame.mixer.music.unpause()
                 if not won:
                     score[0] = 0
@@ -366,24 +400,25 @@ pygame.init()
 pygame.display.set_caption("Йопики у ворот")
 screen = pygame.display.set_mode((704, 700))
 clock = pygame.time.Clock()
-monsters_num = start_money = player_x = player_y = monster_x = monster_y = monster_speed = nx = ny = spawn_par = lvl = 0
+kf = monsters_num = start_money = health = player_x = player_y = monster_x = monster_y = monster_speed = nx = ny = spawn_par = lvl = 0
 won = False
 pygame.mixer.music.load('data/music.mp3')
 pygame.mixer.music.set_volume(0.7)
 pygame.mixer.music.play(-1)
-levels = {'first': [10, 20, 6, 6, 0, 0, 1, 1, 0, 1.5, 'lvl1.txt'],
-          'second': [15, 30, 6, 1, 2, 7, 1.7, 0, -1, 1.2, 'lvl2.txt'],
-          'third': [20, 40, 5, 5, 7, 3, 2.2, -1, 0, 1, 'lvl3.txt']}
+current_music = ['normal']
+levels = {'first': [1, 10, 20, 4, 6, 6, 0, 0, 1, 1, 0, 1.5, 'lvl1.txt'],
+          'second': [1.5, 15, 30, 4, 6, 1, 2, 7, 1.7, 0, -1, 1.2, 'lvl2.txt'],
+          'third': [2, 20, 40, 4, 5, 5, 7, 3, 2.2, -1, 0, 1, 'lvl3.txt'],
+          'fourth': [5, 50, 60, 100, 5, 5, 7, 3, 3, -1, 0, 1, 'lvl3.txt']}  # Поменять lvl3.txt и player_x, player_y, monster_x, monster_y, nx, ny
 start_end_group = pygame.sprite.Group()
 while True:
     won = False
     start_lvl = start_screen()
     screen = pygame.display.set_mode((704, 576))
-    monsters_num, money, player_x, player_y, monster_x, monster_y, monster_v, nx, ny, spawn_par, level_text = start_lvl
+    kf, monsters_num, money, health, player_x, player_y, monster_x, monster_y, monster_v, nx, ny, spawn_par, level_text = start_lvl
     n = 8
     counter = 0
     end_counter = 0
-    health = 4
     cell_width = 64
     left_top = 0
 
@@ -408,7 +443,7 @@ while True:
 
     hp_image = load_image("hp.png")
     money_image = load_image("coin.png")
-    score_image = pygame.transform.scale(load_image("no_image.png", -1), (64, 64))  # Поменять
+    score_image = pygame.transform.scale(load_image("xp.png"), (64, 64))
     buttons_image = pygame.transform.scale(load_image("buttons.png"), (cell_width * 3, cell_width * 2))
     image_1 = pygame.transform.scale(load_image("1.png"), (64, 64))
     image_2 = pygame.transform.scale(load_image("2.png"), (64, 64))
@@ -513,6 +548,7 @@ while True:
                 elif event.key == pygame.K_DOWN:
                     player.update(0, 1)
                 elif event.key == pygame.K_1:
+                    print(check_tower(player.coord[0], player.coord[1]))
                     if check_tower(player.coord[0], player.coord[1]) and money >= 10:
                         towers.append(Tower(player.coord[0], player.coord[1], 'ground'))
                         money -= 10
@@ -522,7 +558,7 @@ while True:
                         money -= 10
                 if event.key == pygame.K_ESCAPE:
                     running = False
-        if monsters_num != 0 and check_monster(monster_x, monster_y):
+        if (monsters_num != 0 and check_monster(monster_x, monster_y)) or (monsters_num != 0 and len(monsters) == 0):
             start = True
             monster_type = random.choice(['ground', 'flying'])
             spawn_chance = [0] * int(spawn_par * fps) + [1]
@@ -542,7 +578,7 @@ while True:
                     monster.monster.kill()
                     monsters.remove(monster)
                     money += 5
-                    score[0] += 5  # коэф
+                    score[0] += int(5 * kf)  # коэф
             if counter >= fps:
                 for tower in towers:
                     tower.damage_monsters_near()
