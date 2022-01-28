@@ -74,7 +74,7 @@ class Monster:
                         self.coord[1] == 0 and self.nx == -1 or self.coord[1] == self.n - 1 and self.nx == 1:
                     self.rotate = 'left'
                 elif (self.lvl[self.coord[1] + self.nx * ((self.ny - self.nx) ** 2)]
-                      [self.coord[0] + self.ny * (-(self.nx - self.ny) ** 2)] not in ('r1', 'r2', 'r3', 'r4',
+                      [self.coord[0] + self.ny * (-(self.nx - self.ny) ** 2)] not in ('r1', 'r2', 'r3', 'r4', 'br'
                                                                                       'r5', 'r6', 'ca', 'xx')):
                     self.rotate = 'left'
                 else:
@@ -150,6 +150,17 @@ class Board:
                 elem = pygame.sprite.Sprite(back_sprites)
                 if text_lvl[i][j] == '..':
                     elem.image = pygame.transform.scale(load_image("background.png"), (self.cell_size, self.cell_size))
+                elif text_lvl[i][j] == ',,':
+                    elem.image = pygame.transform.scale(load_image("background_scary.png"),
+                                                        (self.cell_size, self.cell_size))
+                elif text_lvl[i][j] == 'st':
+                    elem.image = pygame.transform.scale(load_image("scary_tree.png"), (self.cell_size, self.cell_size))
+                elif text_lvl[i][j] == 'sr':
+                    elem.image = pygame.transform.rotate(
+                        pygame.transform.scale(load_image("scary_river.png"), (self.cell_size, self.cell_size)), 90)
+                elif text_lvl[i][j] == 'br':
+                    elem.image = pygame.transform.rotate(
+                        pygame.transform.scale(load_image("bridge.png"), (self.cell_size, self.cell_size)), 90)
                 elif text_lvl[i][j] == "r1":
                     elem.image = pygame.transform.scale(load_image("road.png"), (self.cell_size, self.cell_size))
                 elif text_lvl[i][j] == "r2":
@@ -310,6 +321,8 @@ def start_screen():
                     return levels['second']
                 elif event_start.key == pygame.K_3:
                     return levels['third']
+                elif event_start.key == pygame.K_4:
+                    return levels['fourth']
                 elif event_start.key == pygame.K_ESCAPE:
                     thx_for_game_surface = pygame.Surface((700, 700))
                     thx_for_game_surface.fill((255, 255, 255))
@@ -355,7 +368,8 @@ def end_screen():
             final_score_surface = pygame.Surface((700, 128))
             final_score_surface.fill((255, 255, 255))
             final_score_font = pygame.font.Font(None, 64)
-            final_score_text = final_score_font.render(f"Вы набрали {score[0]} очков", True, pygame.color.Color('black'))
+            final_score_text = final_score_font.render(f"Вы набрали {score[0]} очков", True,
+                                                       pygame.color.Color('black'))
             final_score_text_x = 15
             final_score_text_y = 0
             final_score_surface.blit(final_score_text, (final_score_text_x, final_score_text_y))
@@ -375,15 +389,17 @@ won = False
 pygame.mixer.music.load('data/music.mp3')
 pygame.mixer.music.set_volume(0.7)
 pygame.mixer.music.play(-1)
-levels = {'first': [10, 20, 6, 6, 0, 0, 1, 1, 0, 1.5, 'lvl1.txt'],
-          'second': [15, 30, 6, 1, 2, 7, 1.7, 0, -1, 1.2, 'lvl2.txt'],
-          'third': [20, 40, 5, 5, 7, 3, 2.2, -1, 0, 1, 'lvl3.txt']}
+levels = {'first': [10, 20, 6, 6, 0, 0, 1, 1, 0, 1.5, 'lvl1.txt', 'lvl_back.txt'],
+          'second': [15, 30, 6, 1, 2, 7, 1.7, 0, -1, 1.2, 'lvl2.txt', 'lvl_back.txt'],
+          'third': [20, 40, 5, 5, 7, 3, 2.2, -1, 0, 1, 'lvl3.txt', 'lvl_back.txt'],
+          'fourth': [20, 60, 7, 7, 0, 0, 2.5, 1, 0, 0.8, 'lvl4.txt', 'lvl_scary_back.txt']}
 start_end_group = pygame.sprite.Group()
 while True:
     won = False
     start_lvl = start_screen()
     screen = pygame.display.set_mode((704, 576))
-    monsters_num, money, player_x, player_y, monster_x, monster_y, monster_v, nx, ny, spawn_par, level_text = start_lvl
+    monsters_num, money, player_x, player_y, monster_x, monster_y, monster_v, nx, ny, spawn_par, level_text,\
+        back_lvl = start_lvl
     n = 8
     counter = 0
     end_counter = 0
@@ -406,7 +422,7 @@ while True:
     state_sprites = pygame.sprite.Group()
     hero_sprite = pygame.sprite.Group()
 
-    board_background.fill(load_level('lvl_back.txt'))
+    board_background.fill(load_level(back_lvl))
     lvl = load_level(level_text)
     board_state.fill(lvl)
 
